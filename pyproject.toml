@@ -22,7 +22,6 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-  "ruff",
   "pip", # required for downloading spaCy model in uv-created virtualenvs
   "marimo>=0.13.11",
   "polars>=0.20.4",
