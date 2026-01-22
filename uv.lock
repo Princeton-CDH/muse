@@ -762,7 +762,6 @@ dependencies = [
     { name = "numpy" },
     { name = "pip" },
     { name = "polars" },
-    { name = "ruff" },
     { name = "transformers", extra = ["sentencepiece", "tiktoken", "torch"] },
 ]
 
@@ -787,7 +786,6 @@ requires-dist = [
     { name = "pip" },
     { name = "polars", specifier = ">=0.20.4" },
     { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "ruff" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "transformers", extras = ["sentencepiece", "tiktoken", "torch"] },
 ]
