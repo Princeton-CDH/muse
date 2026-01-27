@@ -42,7 +42,7 @@ A parallel sentence corpus includes contains the following additional informatio
 
 #### Parallel Paragraph Corpus Fields
 
-A parallel paragraph corpus includes the following additional information about the associated MTO articles:
+A parallel paragraph corpus includes the following additional information about the associated Music Theory Online (MTO) articles:
 
 | Field Name | Type | Description | 
 | --- | --- | --- |
