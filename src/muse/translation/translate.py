@@ -5,15 +5,14 @@ to English and vice versa.
 """
 
 from timeit import default_timer as timer
+
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
 
-from muse.translation.hymt_langs import (
-    lang_idx_en as hymt_lang_idx_en,
-    lang_idx_zh as hymt_lang_idx_zh,
-)
+from muse.translation.hymt_langs import lang_idx_en as hymt_lang_idx_en
+from muse.translation.hymt_langs import lang_idx_zh as hymt_lang_idx_zh
 
 
 def hymt_translate(
@@ -21,7 +20,8 @@ def hymt_translate(
     tgt_lang: str,
     text: str,
     model_name: str = "tencent/HY-MT1.5-1.8B",
-    verbose: bool = False) -> str:
+    verbose: bool = False,
+) -> str:
     """
     Translate text written in source language to target language with Tencent's
     Hunyuan Translation Model Version 1.5 (HY-MT-1.5). Languages are specified with
@@ -42,8 +42,8 @@ def hymt_translate(
         # Use Chinese template when Chinese is the source or target language
         tgt_lang_name = hymt_lang_idx_zh[tgt_lang]
         prompt = (
-            f"将以下文本翻译为{tgt_lang_name}，注意只需要输出翻译后的结果，"
-            f"不要额外解释：\n\n{text}"
+            f"将以下文本翻译为{tgt_lang_name}，注意只需要输出翻译后的结果，"  # noqa: RUF001
+            f"不要额外解释：\n\n{text}"  # noqa: RUF001
         )
     else:
         # For all other language pairs, use English prompt
@@ -52,14 +52,14 @@ def hymt_translate(
             f"Translate the following segment into {tgt_lang_name}, without "
             f"additional explanation.\n\n{text}"
         )
-    
+
     # Initialize tokenizer and model
     if verbose:
         start = timer()
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
     if verbose:
-        print(f"Loaded tokenizer & model in {timer()-start:.0f} seconds")
+        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
 
     # Generate model input
     messages = [{"role": "user", "content": prompt}]
@@ -78,12 +78,12 @@ def hymt_translate(
         start = timer()
     outputs = model.generate(tokenized_chat.to(model.device), max_new_tokens=2048)
     if verbose:
-        print(f"Generated model output in {timer()-start:.0f} seconds")
+        print(f"Generated model output in {timer() - start:.0f} seconds")
     # Model output begins with initial prompt
     tr_tokens = outputs[0][input_len:]
     if verbose:
         # Report generated output length excluding the prompt prefix
         print(f"Output length: {outputs[0].size()[0] - input_len} tokens")
     tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
-    
+
     return tr_text
