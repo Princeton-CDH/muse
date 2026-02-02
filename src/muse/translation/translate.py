@@ -8,11 +8,16 @@ from timeit import default_timer as timer
 
 from transformers import (
     AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
     AutoTokenizer,
 )
 
 from muse.translation.hymt_langs import lang_idx_en as hymt_lang_idx_en
 from muse.translation.hymt_langs import lang_idx_zh as hymt_lang_idx_zh
+from muse.translation.nllb_langs import lang_index as nllb_lang_idx
+
+# Maximum number of (new) tokens a model can generate
+MAX_GEN_LEN = 2048
 
 
 def hymt_translate(
@@ -76,7 +81,9 @@ def hymt_translate(
     # Generate translation
     if verbose:
         start = timer()
-    outputs = model.generate(tokenized_chat.to(model.device), max_new_tokens=2048)
+    outputs = model.generate(
+        tokenized_chat.to(model.device), max_new_tokens=MAX_GEN_LEN
+    )
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
     # Model output begins with initial prompt
@@ -84,6 +91,61 @@ def hymt_translate(
     if verbose:
         # Report generated output length excluding the prompt prefix
         print(f"Output length: {outputs[0].size()[0] - input_len} tokens")
+    tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
+
+    return tr_text
+
+
+def nllb_translate(
+    src_lang: str,
+    tgt_lang: str,
+    text: str,
+    model_name: str = "facebook/nllb-200-3.3B",
+    verbose: bool = False,
+) -> str:
+    """
+    Translate text written in source language to target language with Meta's
+    No Language Left Behind (NLLB) NLLB-200 translation models. Languages are
+    specified with their ISO 639-1 codes.
+
+    By default, the 3.3B translation model (facebook/nllb-200-3.3B) is used,
+    but an alternative model may be specified via `model_name`.
+    """
+    # Validate input languages
+    if src_lang not in nllb_lang_idx:
+        # Only used for input validation, not generation
+        raise ValueError(f"Source language '{src_lang}' is not supported")
+    if tgt_lang not in nllb_lang_idx:
+        raise ValueError(f"Target language '{tgt_lang}' is not supported")
+
+    # Initialize tokenizer and model
+    if verbose:
+        start = timer()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    if verbose:
+        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+
+    # Generate model input
+    ## Note: excludes starting token corresponding to target language
+    model_inputs = tokenizer(text, return_tensors="pt")
+    input_len = model_inputs["input_ids"][0].size()[0]
+    if verbose:
+        print(f"Input length: {input_len} tokens")
+
+    # Generate translation
+    if verbose:
+        start = timer()
+    outputs = model.generate(
+        **model_inputs,
+        forced_bos_token_id=tokenizer.convert_tokens_to_ids(nllb_lang_idx[tgt_lang]),
+    )
+    if verbose:
+        print(f"Generated model output in {timer() - start:.0f} seconds")
+    tr_tokens = outputs[0]
+    if verbose:
+        # Report generated output length excluding the prompt prefix
+        print(f"Output length: {outputs[0].size()[0]} tokens")
     tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
 
     return tr_text
