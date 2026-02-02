@@ -139,6 +139,60 @@ def nllb_translate(
     outputs = model.generate(
         **model_inputs,
         forced_bos_token_id=tokenizer.convert_tokens_to_ids(nllb_lang_idx[tgt_lang]),
+        max_length=MAX_GEN_LEN,
+    )
+    if verbose:
+        print(f"Generated model output in {timer() - start:.0f} seconds")
+    tr_tokens = outputs[0]
+    if verbose:
+        # Report generated output length excluding the prompt prefix
+        print(f"Output length: {outputs[0].size()[0]} tokens")
+    tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
+
+    return tr_text
+
+
+def madlad_translate(
+    tgt_lang: str,
+    text: str,
+    model_name: str = "google/madlad400-3b-mt",
+    verbose: bool = False,
+) -> str:
+    """
+    Translate text written to target language with Google's MADLAD-400
+    translation models. Languages are specified with their ISO 639-1 codes.
+    The MADLAD-400 translation models were trained the MADLAD-400 dataset and
+    have a T5 architecture.
+
+    By default, the 3B translation model (google/madlad400-3b-mt) is used,
+    but an alternative model may be specified via `model_name`.
+    """
+    # NOTE: Target language is not validated.
+    #       These maodels use BCP-47 for language codes, which uses ICO-639-1
+    #       wehn applicable and ISO-693-3 codes otherwise. See the paper for a
+    #       full list of the 419 supported languages and their codes:
+    #       https://arxiv.org/pdf/2309.04662#subsection.A.1
+
+    # Initialize tokenizer and model
+    if verbose:
+        start = timer()
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    if verbose:
+        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+
+    # Generate model input
+    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt")
+    input_len = model_inputs["input_ids"][0].size()[0]
+    if verbose:
+        print(f"Input length: {input_len} tokens")
+
+    # Generate translation
+    if verbose:
+        start = timer()
+    outputs = model.generate(
+        **model_inputs,
+        max_length=MAX_GEN_LEN,
     )
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
