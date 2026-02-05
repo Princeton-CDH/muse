@@ -188,7 +188,7 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
     return pairs
 
 
-def build_sentence_parallel_corpus(input_path: str, output_path: str):
+def build_sentence_parallel_corpus(input_path: pathlib.Path, output_path: pathlib.Path):
     """Build parallel corpus from Notion export to JSONL."""
     objects = []
     count = 0
