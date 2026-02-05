@@ -32,24 +32,6 @@ LABEL_RE = re.compile(
 )
 
 
-# DASH CHARACTERS CONFIGURATION
-DASH_CHARS = {
-    "\u2014",  # — EM DASH (long dash)
-    "\u2013",  # - EN DASH (shorter dash)
-    "\u2e3a",  # ⸺ TWO-EM DASH
-    "\u2e3b",  # ⸻ THREE-EM DASH
-    "\u2015",  # ― HORIZONTAL BAR
-    "-",  # - HYPHEN-MINUS
-}
-
-# This dash regex exist as the fallback for non-quoted entries)
-# Most entries follow format: "quoted text" — citation
-#   → We handle this with STRING SLICING (find first/last quote)
-# Some entries have NO quotes at all: text — citation
-#   → For these, we FALLBACK to this regex to find dash separators
-DASH_SPLIT_RE = re.compile(f"[{''.join(sorted(DASH_CHARS))}]+")
-
-
 # CITATION PATTERNS CONFIGURATION
 # Citation indicators that appear at the start of citation text after the main content
 CITATION_PATTERNS = {
@@ -73,6 +55,7 @@ def extract_text_and_citation(rest: str) -> tuple[str | None, str | None]:
     # To preserve nested quotes, we find FIRST and LAST quote positions,
     # and extract everything between them as the main text.
     # Nested quotes example: "诗歌...韵是强化意义、"穿连"诗歌的韵律手段..."
+    rest = rest.strip()
     first_quote = rest.find('"')
     last_quote = rest.rfind('"')
 
@@ -85,27 +68,26 @@ def extract_text_and_citation(rest: str) -> tuple[str | None, str | None]:
             return text, after
         return text, None
 
-    # To handle entried withpit quotes,
-    # we look for em dash separators as fallback for text/citation split
-    match = DASH_SPLIT_RE.search(rest)
-    if match:
-        # Split at the first emdash occurrence
-        idx = match.start()
-        text = rest[:idx].strip()  # text before first em dash
-        cite = rest[match.end() :].strip()  # text after first em dash
+    # To handle entries without quotes,
+    # split on the LAST whitespace to separate text from citation
+    # rsplit(maxsplit=1) splits from right, so we get [text, citation]
+    parts = rest.rsplit(None, 1)  # Split on any whitespace, max 1 split
 
-        # Validate extracted content as a citation by checking it starts
-        # with a known citation pattern. If not, treat entire text as content.
-        if cite and not re.match(f"^({CITATION_PATTERN})", cite, re.I):
-            text = rest.strip()
-            cite = None
-        return text, cite
+    if len(parts) == 2:
+        potential_text, potential_cite = parts
+        # Validate citation by checking it starts with a known citation pattern
+        if potential_cite and re.match(f"^({CITATION_PATTERN})", potential_cite, re.I):
+            text = potential_text.strip()
+            cite = potential_cite.strip()
+        else:
+            # Not a valid citation, treat entire text as content
+            return rest if rest else None, None
+    else:
+        return rest if rest else None, None
 
-    # Fallback for entries with no quotes and no em dashes
+    # Fallback for entries with no quotes and no dashes
     # Use the entire rest as text and leave citation empty
-    # Example: "English: Charm (see 乡韵 xiāngyùn )" → text="Charm...", cite=None
-    text = rest.strip()
-    return text if text else None, None
+    return text if text else None, cite if cite else None
 
 
 def parse_labelled_paragraphs(paragraphs: list[str]) -> dict[str, dict[str, dict]]:
@@ -183,36 +165,32 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
                     )
                 )
 
-    # PART 2: Pair entries WITHOUT letter suffixes (None) by position
-    # Some entries have "Chinese:" without letter suffix, paired with "English:" by position
+    # PART 2: Pair entries WITHOUT letter suffixes (None)
+    # Some entries have "Chinese:" without letter suffix, matched directly with "English:"
+    # Verified: at most one Chinese: and one English: entry per term (one-to-one)
     if None in blocks:
         entry = blocks[None]
         if "English" in entry:
             en = entry["English"]
             for lang_name in SUPPORTED_LANGUAGES:
-                if lang_name == "English":
-                    continue
-                if lang_name in entry:
+                if lang_name != "English" and lang_name in entry:
                     src = entry[lang_name]
-                    # Check if not already added by letter matching
-                    if not any(
-                        p[0] == lang_name and p[1] == src["text"] for p in pairs
-                    ):
-                        pairs.append(
-                            (
-                                lang_name,
-                                src["text"],
-                                src.get("cite", ""),
-                                en["text"],
-                                en.get("cite", ""),
-                            )
+                    pairs.append(
+                        (
+                            lang_name,
+                            src["text"],
+                            src.get("cite", ""),
+                            en["text"],
+                            en.get("cite", ""),
                         )
+                    )
 
     return pairs
 
 
 def build_sentence_parallel_corpus(input_path: str, output_path: str):
     """Build parallel corpus from Notion export to JSONL."""
+    objects = []
     count = 0
 
     for rec in orjsonl.load(input_path):
@@ -236,8 +214,10 @@ def build_sentence_parallel_corpus(input_path: str, output_path: str):
                 "en_cite": en_cite or "",
                 "term": term,
             }
-            # Use orjsonl to append JSONL entry, preserving original formatting
-            orjsonl.append(output_path, obj)
+            objects.append(obj)
+
+    # Use orjsonl.save() to overwrite the output file with all entries
+    orjsonl.save(output_path, objects)
 
 
 def main():
