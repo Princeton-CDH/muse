@@ -227,7 +227,7 @@ def main():
     parsed = args.parse_args()
 
     parsed.output.parent.mkdir(parents=True, exist_ok=True)
-    build_sentence_parallel_corpus(str(parsed.input), str(parsed.output))
+    build_sentence_parallel_corpus(parsed.input, parsed.output)
 
 
 if __name__ == "__main__":
