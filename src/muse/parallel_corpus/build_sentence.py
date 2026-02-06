@@ -17,10 +17,17 @@ import orjsonl
 
 # LANGUAGE CONFIGURATION
 # To add/remove supported languages, update SUPPORTED_LANGUAGES below
-SUPPORTED_LANGUAGES = {"English", "Japanese", "Chinese", "Spanish"}
+# Format: "Human-readable name": "ISO 639-1 code"
+SUPPORTED_LANGUAGES = {
+    "Chinese": "zh",
+    "English": "en",
+    "Japanese": "ja",
+    "Spanish": "es",
+}
 
 # Regex pattern for matching language labels in text blocks
-LANGUAGE_LABELS = "|".join(sorted(SUPPORTED_LANGUAGES))
+# Extract language names from dictionary keys
+LANGUAGE_LABELS = "|".join(sorted(SUPPORTED_LANGUAGES.keys()))
 
 # Regex pattern for letter suffixes used in label blocks: A, B, C, D
 LETTER_SUFFIX_PATTERN = r"[A-D]"
@@ -157,7 +164,7 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
                 src = entry[lang_name]
                 pairs.append(
                     (
-                        lang_name,
+                        SUPPORTED_LANGUAGES[lang_name],  # Convert to ISO 639-1 code
                         src["text"],
                         src.get("cite", ""),
                         en["text"],
@@ -177,7 +184,7 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
                     src = entry[lang_name]
                     pairs.append(
                         (
-                            lang_name,
+                            SUPPORTED_LANGUAGES[lang_name],  # Convert to ISO 639-1 code
                             src["text"],
                             src.get("cite", ""),
                             en["text"],
