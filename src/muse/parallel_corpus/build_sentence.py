@@ -32,10 +32,10 @@ LANGUAGE_LABELS = "|".join(sorted(SUPPORTED_LANGUAGES.keys()))
 # Regex pattern for letter suffixes used in label blocks: A, B, C, D
 LETTER_SUFFIX_PATTERN = r"[A-D]"
 
-# Match labels like "English A:", "Japanese B:", "Chinese:", "English:"
-# Labels must have a colon, may or may not have letter suffixes [A-D]
+# Match labels like "English A:", "Japanese B:", "Chinese A:", "Spanish B:"
+# Format: "[Language] [A-D]:" - required space between name and letter suffix
 LABEL_RE = re.compile(
-    rf"^(?P<label>{LANGUAGE_LABELS})\s*(?:{LETTER_SUFFIX_PATTERN})?:\s*(?P<rest>.*)$"
+    rf"^(?P<label>{LANGUAGE_LABELS}) (?P<letter>{LETTER_SUFFIX_PATTERN}):\s*(?P<rest>.*)$"
 )
 
 
@@ -57,11 +57,18 @@ CITATION_PATTERNS = {
 CITATION_PATTERN = "|".join(re.escape(p) for p in sorted(CITATION_PATTERNS))
 
 
-def extract_text_and_citation(rest: str) -> tuple[str | None, str | None]:
-    """Extract quoted text and citation from a paragraph rest."""
-    # To preserve nested quotes, we find FIRST and LAST quote positions,
-    # and extract everything between them as the main text.
-    # Nested quotes example: "诗歌...韵是强化意义、"穿连"诗歌的韵律手段..."
+def extract_text_and_citation(rest: str) -> tuple[str, str]:
+    """Extract quoted text and citation from a paragraph rest.
+
+    Assumes double quotes (") are used to mark quoted text in the input.
+    Handles nested quotes by extracting content between first and last quote.
+
+    Args:
+        rest: Text content after the language label (e.g., after "English A: ")
+
+    Returns:
+        A tuple of (text, citation). Returns ("", "") if no valid text is found.
+    """
     rest = rest.strip()
     first_quote = rest.find('"')
     last_quote = rest.rfind('"')
@@ -71,9 +78,7 @@ def extract_text_and_citation(rest: str) -> tuple[str | None, str | None]:
         text = rest[first_quote + 1 : last_quote].strip()
         after = rest[last_quote + 1 :].strip()
 
-        if after:
-            return text, after
-        return text, None
+        return text, after
 
     # To handle entries without quotes,
     # split on the LAST whitespace to separate text from citation
@@ -88,42 +93,35 @@ def extract_text_and_citation(rest: str) -> tuple[str | None, str | None]:
             cite = potential_cite.strip()
         else:
             # Not a valid citation, treat entire text as content
-            return rest if rest else None, None
+            return rest, ""
     else:
-        return rest if rest else None, None
+        return rest, ""
 
     # Fallback for entries with no quotes and no dashes
     # Use the entire rest as text and leave citation empty
-    return text if text else None, cite if cite else None
+    return text, cite
 
 
-def parse_labelled_paragraphs(paragraphs: list[str]) -> dict[str, dict[str, dict]]:
+def parse_labelled_paragraphs(entries: list[str]) -> dict[str, dict[str, dict]]:
     """
     Parse labeled paragraphs into a nested structure grouped by letter and language.
     The letter suffix (A, B, C, D) aligns parallel translations across languages.
+    Format: "[Language] [A-D]:"
     """
     blocks: dict[str, dict[str, dict]] = {}
-    i = 0
-    while i < len(paragraphs):
+    for entry in entries:
         # Normalize text encoding and fix mojibake using ftfy library
-        paragraph = ftfy.fix_text(paragraphs[i]).strip()
+        entry = ftfy.fix_text(entry).strip()
         # Match language label and letter suffix (A, B, C, D)
-        label_match = LABEL_RE.match(paragraph)
+        label_match = LABEL_RE.match(entry)
         if not label_match:
-            i += 1
             continue
 
         # Extract language label (English, Japanese, Chinese, Spanish)
-        label_word = label_match.group("label").strip()
+        label_word = label_match.group("label")
 
-        # Extract letter suffix (A, B, C, or D) from the label area only
-        # The letter suffix appears right after the label name, before the colon
-        # Example: "English A:" - letter 'A' is after "English" but before ":"
-        # We search for [letter + colon] pattern to avoid matching letters
-        # in the label name itself (e.g., 'C' in "Chinese")
-        label_area = paragraph[: label_match.end() - len(label_match.group("rest")) - 1]
-        letter_match = re.search(f"({LETTER_SUFFIX_PATTERN})\\s*:", label_area)
-        letter = letter_match.group(1) if letter_match else None
+        # Extract letter suffix (A, B, C, or D) using named group
+        letter = label_match.group("letter")
 
         # Extract rest of the paragraph after language label and letter suffix
         rest = label_match.group("rest").strip()
@@ -134,23 +132,21 @@ def parse_labelled_paragraphs(paragraphs: list[str]) -> dict[str, dict[str, dict
         # Store in nested dictionary structure by letter and language
         if letter not in blocks:
             blocks[letter] = {}
-        blocks[letter][label_word] = {"text": text or "", "cite": cite or ""}
-        i += 1
+        blocks[letter][label_word] = {"text": text, "cite": cite}
 
     return blocks
 
 
-def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
-    """Pair source language blocks with English by letter.
+def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[dict]:
+    """Pair source language blocks with English by letter suffix.
 
-    Strategy:
-    1. First, pair entries WITH letter suffixes (A, B, C...) - matched by letter
-    2. Then, pair entries WITHOUT letter suffixes (None) - matched by position
+    Format: "[Language] [A-D]:"
+    Only processes entries with letter suffixes (A, B, C, D).
     """
-    pairs = []
+    pairs: list[dict] = []
 
-    # PART 1: Pair entries WITH letter suffixes (A, B, C, D...)
-    letters = sorted(k for k in blocks if k is not None)
+    # Pair entries by letter suffix (A, B, C, D...)
+    letters = sorted(blocks.keys())
 
     for L in letters:
         entry = blocks[L]
@@ -163,41 +159,21 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[tuple]:
             if lang_name in entry:
                 src = entry[lang_name]
                 pairs.append(
-                    (
-                        SUPPORTED_LANGUAGES[lang_name],  # Convert to ISO 639-1 code
-                        src["text"],
-                        src.get("cite", ""),
-                        en["text"],
-                        en.get("cite", ""),
-                    )
+                    {
+                        "lang_code": SUPPORTED_LANGUAGES[lang_name],
+                        "src_text": src["text"],
+                        "src_cite": src.get("cite", ""),
+                        "en_text": en["text"],
+                        "en_cite": en.get("cite", ""),
+                    }
                 )
-
-    # PART 2: Pair entries WITHOUT letter suffixes (None)
-    # Some entries have "Chinese:" without letter suffix, matched directly with "English:"
-    # Verified: at most one Chinese: and one English: entry per term (one-to-one)
-    if None in blocks:
-        entry = blocks[None]
-        if "English" in entry:
-            en = entry["English"]
-            for lang_name in SUPPORTED_LANGUAGES:
-                if lang_name != "English" and lang_name in entry:
-                    src = entry[lang_name]
-                    pairs.append(
-                        (
-                            SUPPORTED_LANGUAGES[lang_name],  # Convert to ISO 639-1 code
-                            src["text"],
-                            src.get("cite", ""),
-                            en["text"],
-                            en.get("cite", ""),
-                        )
-                    )
 
     return pairs
 
 
 def build_sentence_parallel_corpus(input_path: str, output_path: str):
     """Build parallel corpus from Notion export to JSONL."""
-    objects = []
+    entries = []
     count = 0
 
     for rec in orjsonl.load(input_path):
@@ -208,23 +184,25 @@ def build_sentence_parallel_corpus(input_path: str, output_path: str):
         # Pair source language blocks with English by letter
         pairs = pair_blocks(blocks)
 
-        for lang_name, src_text, src_cite, en_text, en_cite in pairs:
+        for pair in pairs:
+            src_text = pair["src_text"]
+            en_text = pair["en_text"]
             if not src_text or not en_text:
                 continue
             count += 1
             obj = {
                 "id": count,
-                "lang": lang_name,
+                "lang": pair["lang_code"],
                 "text": src_text,
                 "en_tr": en_text,
-                "cite": src_cite or "",
-                "en_cite": en_cite or "",
+                "cite": pair["src_cite"] or "",
+                "en_cite": pair["en_cite"] or "",
                 "term": term,
             }
-            objects.append(obj)
+            entries.append(obj)
 
     # Use orjsonl.save() to overwrite the output file with all entries
-    orjsonl.save(output_path, objects)
+    orjsonl.save(output_path, entries)
 
 
 def main():
