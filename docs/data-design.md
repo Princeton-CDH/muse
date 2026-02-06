@@ -17,7 +17,7 @@ A parallel text corpus has the following four fields regardless of the contents 
 | Field Name | Type | Description | 
 | --- | --- | --- |
 | id | int | Unique identifier for the parallel text pair |
-| lang | str | Language of the original text |
+| lang | str | Language of the original text (ISO 639-1 language code) |
 | text | str | Original text |
 | en_tr | str | Professional English translation of the text |
 
@@ -62,8 +62,8 @@ At this time there are no optional fields for a machine translation corpus.
 | tr_id | str | Unique identifier (UUID) for the machine translation |
 | pair_id | str | Parallel text record ID |
 | model | str | Model used for translation |
-| src_lang | str | Language of the source text |
-| tr_lang | str | Language of the translation |
+| src_lang | str | Language of the source text (ISO 639-1 language code) |
+| tr_lang | str | Language of the translation (ISO 639-1 language code) |
 | src_text | str | Source text |
 | ref_text | str | Reference translation |
 | tr_text | str | Machine translated text |
