@@ -208,7 +208,7 @@ def build_sentence_parallel_corpus(input_path: pathlib.Path, output_path: pathli
 def main():
     args = argparse.ArgumentParser()
     args.add_argument("input", type=pathlib.Path)
-    args.add_argument("output", type=pathlib.Path
+    args.add_argument("output", type=pathlib.Path)
     parsed = args.parse_args()
 
     parsed.output.parent.mkdir(parents=True, exist_ok=True)
