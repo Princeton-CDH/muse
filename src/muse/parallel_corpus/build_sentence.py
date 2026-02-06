@@ -171,7 +171,7 @@ def pair_blocks(blocks: dict[str, dict[str, dict]]) -> list[dict]:
     return pairs
 
 
-def build_sentence_parallel_corpus(input_path: str, output_path: str):
+def build_sentence_parallel_corpus(input_path: pathlib.Path, output_path: pathlib.Path):
     """Build parallel corpus from Notion export to JSONL."""
     entries = []
     count = 0
@@ -207,12 +207,12 @@ def build_sentence_parallel_corpus(input_path: str, output_path: str):
 
 def main():
     args = argparse.ArgumentParser()
-    args.add_argument("--input", type=pathlib.Path, required=True)
-    args.add_argument("--output", type=pathlib.Path, required=True)
+    args.add_argument("input", type=pathlib.Path)
+    args.add_argument("output", type=pathlib.Path
     parsed = args.parse_args()
 
     parsed.output.parent.mkdir(parents=True, exist_ok=True)
-    build_sentence_parallel_corpus(str(parsed.input), str(parsed.output))
+    build_sentence_parallel_corpus(parsed.input, parsed.output)
 
 
 if __name__ == "__main__":
