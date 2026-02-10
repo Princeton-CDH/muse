@@ -224,11 +224,10 @@ def translate(
     verbose: bool = False,
 ) -> str:
     """
-    Translate text using a specified HuggingFace translation model.
-
-    This function provides a unified interface for translating text across multiple
-    translation models. It routes to the appropriate model-specific implementation
-    based on the model parameter.
+    Translate text using a specified HuggingFace translation model. This function
+    provides a unified interface for translating text across multiple translation
+    models by routing to the appropriate model-specific implementation based on the
+    model parameter.
 
     Supported models:
         - tencent/HY-MT1.5-7B: Tencent's Hunyuan Translation Model v1.5 (7B)
@@ -237,10 +236,8 @@ def translate(
 
     Languages are specified using ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
     Language validation is delegated to the model-specific functions, so supported
-    languages vary by model.
-
-    Note: The MADLAD model does not use the source language parameter internally,
-    but it is accepted for API consistency.
+    languages vary by model. The MADLAD model does not use the source language
+    parameter internally, but it is accepted for API consistency.
 
     Args:
         model: HuggingFace model identifier (must be one of the supported models)
