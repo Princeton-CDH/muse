@@ -2,6 +2,10 @@
 Library for performing machine translation (MT) for a given language for various
 MT models. All supported models are can translate Chinese, Japanese, and Spanish
 to English and vice versa.
+
+The translate() function provides a unified interface for translating text across
+multiple models. Model-specific functions (hymt_translate, nllb_translate,
+madlad_translate) are also available for direct use.
 """
 
 from timeit import default_timer as timer
@@ -18,6 +22,13 @@ from muse.translation.nllb_langs import lang_index as nllb_lang_idx
 
 # Maximum number of (new) tokens a model can generate
 MAX_GEN_LEN = 2048
+
+# Supported models for the unified translate() function
+SUPPORTED_MODELS = {
+    "tencent/HY-MT1.5-7B": "hymt",
+    "facebook/nllb-200-3.3B": "nllb",
+    "google/madlad400-7b-mt": "madlad",
+}
 
 
 def hymt_translate(
@@ -203,3 +214,63 @@ def madlad_translate(
     tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
 
     return tr_text
+
+
+def translate(
+    model: str,
+    src_lang: str,
+    tgt_lang: str,
+    text: str,
+    verbose: bool = False,
+) -> str:
+    """
+    Translate text using a specified HuggingFace translation model.
+
+    This function provides a unified interface for translating text across multiple
+    translation models. It routes to the appropriate model-specific implementation
+    based on the model parameter.
+
+    Supported models:
+        - tencent/HY-MT1.5-7B: Tencent's Hunyuan Translation Model v1.5 (7B)
+        - facebook/nllb-200-3.3B: Meta's No Language Left Behind (3.3B)
+        - google/madlad400-7b-mt: Google's MADLAD-400 (7B)
+
+    Languages are specified using ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
+    Language validation is delegated to the model-specific functions, so supported
+    languages vary by model.
+
+    Note: The MADLAD model does not use the source language parameter internally,
+    but it is accepted for API consistency.
+
+    Args:
+        model: HuggingFace model identifier (must be one of the supported models)
+        src_lang: Source language ISO 639-1 code
+        tgt_lang: Target language ISO 639-1 code
+        text: Text to translate from source to target language
+        verbose: If True, print timing information and token counts
+
+    Returns:
+        Translated text as a string
+
+    Raises:
+        ValueError: If the specified model is not supported, or if the source/target
+                    languages are not supported by the chosen model
+    """
+    # Validate model
+    if model not in SUPPORTED_MODELS:
+        supported = list(SUPPORTED_MODELS.keys())
+        raise ValueError(f"Unsupported model: {model}. Supported models: {supported}")
+
+    # Route to appropriate model-specific function
+    model_type = SUPPORTED_MODELS[model]
+
+    if model_type == "hymt":
+        return hymt_translate(src_lang, tgt_lang, text, model, verbose)
+    elif model_type == "nllb":
+        return nllb_translate(src_lang, tgt_lang, text, model, verbose)
+    elif model_type == "madlad":
+        # MADLAD does not use src_lang parameter
+        return madlad_translate(tgt_lang, text, model, verbose)
+    else:
+        # This should never happen if SUPPORTED_MODELS is correctly maintained
+        raise ValueError(f"Unknown model type: {model_type}")
