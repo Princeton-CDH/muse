@@ -18,12 +18,12 @@ class TestTranslateErrorHandling:
 
     def test_invalid_source_language_raises_error(self):
         """Test that invalid source language raises ValueError."""
-        with pytest.raises(ValueError, match="Source language .* is not supported"):
+        with pytest.raises(ValueError, match=r"Source language .* is not supported"):
             translate("tencent/HY-MT1.5-7B", "invalid_lang", "en", "test")
 
     def test_invalid_target_language_raises_error(self):
         """Test that invalid target language raises ValueError."""
-        with pytest.raises(ValueError, match="Target language .* is not supported"):
+        with pytest.raises(ValueError, match=r"Target language .* is not supported"):
             translate("tencent/HY-MT1.5-7B", "en", "invalid_lang", "test")
 
 
