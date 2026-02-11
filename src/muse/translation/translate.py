@@ -138,7 +138,8 @@ def nllb_translate(
         print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
 
     # Generate model input
-    ## Note: excludes starting token corresponding to target language
+    ## Set source language for proper tokenization
+    tokenizer.src_lang = nllb_lang_idx[src_lang]
     model_inputs = tokenizer(text, return_tensors="pt")
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
