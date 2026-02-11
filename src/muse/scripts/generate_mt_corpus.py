@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from muse.translation.translate import SUPPORTED_MODELS, translate
+from muse.translation.translate import translate
 
 # Constants
 REQUIRED_FIELDS = ["id", "lang", "text", "en_tr"]
@@ -213,28 +213,13 @@ def main():
         level=log_level, format="%(levelname)s: %(message)s", stream=sys.stderr
     )
 
-    # Validate model
-    if args.model not in SUPPORTED_MODELS:
-        logger.error(f"Unsupported model: {args.model}")
-        logger.error(f"Supported models: {list(SUPPORTED_MODELS.keys())}")
-        sys.exit(1)
-
-    # Validate input
+    # Validate input and prepare paths
     input_path = Path(args.input)
-    try:
-        record_count = validate_input_file(input_path)
-        logger.info(f"Found {record_count} records in input file")
-    except (FileNotFoundError, ValueError) as e:
-        logger.error(str(e))
-        sys.exit(1)
+    record_count = validate_input_file(input_path)
+    logger.info(f"Found {record_count} records in input file")
 
-    # Check output path
     output_path = Path(args.output)
-    try:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
-        logger.error(f"Cannot create output directory: {e}")
-        sys.exit(1)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Process corpus
     logger.info(f"Starting translation with model: {args.model}")
@@ -243,21 +228,15 @@ def main():
             input_path, output_path, args.model, args.verbose
         )
     except KeyboardInterrupt:
-        logger.warning("Processing interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Processing failed: {e}")
+        logger.warning("\nProcessing interrupted by user")
         sys.exit(1)
 
     # Log summary
     logger.info("Processing complete")
     logger.info(f"Total records: {total}")
     logger.info(f"Successful translations: {success}/{total * 2}")
-    logger.info(f"Failed translations: {errors}")
-
     if errors > 0:
-        logger.warning("Some translations failed. See log for details.")
-
+        logger.warning(f"Failed translations: {errors}")
     logger.info(f"Output written to: {output_path}")
 
 
