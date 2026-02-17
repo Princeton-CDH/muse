@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Build a parallel sentence corpus (JSONL) from MuSE music-theoretical concept data
 from Notion. Each parallel sentence will be a language pair of the source language
