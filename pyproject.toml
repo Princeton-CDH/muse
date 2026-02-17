@@ -28,6 +28,7 @@ dependencies = [
   "numpy",
   "ipython", # Required by transformers for trainer functionality
   "transformers[torch, sentencepiece, tiktoken]",
+  "orjsonl",
   "evaluate>=0.4.0",
   "datasets>=2.0.0", # required by evaluate
   "sacrebleu>=2.0.0", # required by evaluate for ChrF metric

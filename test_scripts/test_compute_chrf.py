@@ -5,9 +5,10 @@ Usage:
     python test_scripts/test_compute_chrf.py mt_test_data.jsonl
 """
 
-import json
 import sys
 from pathlib import Path
+
+import orjsonl
 
 from muse.translation.metrics import compute_chrf
 
@@ -22,12 +23,7 @@ def main():
         print(f"Error: File not found: {mt_file}")
         sys.exit(1)
 
-    mt_records = []
-    with mt_file.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                mt_records.append(json.loads(line))
+    mt_records = orjsonl.load(mt_file)
 
     print(f"Testing {len(mt_records)} translations\n")
 
