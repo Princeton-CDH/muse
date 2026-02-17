@@ -1,15 +1,7 @@
 """
-Google Cloud API - Connectivity Tests
-
-This script tests Google Cloud API connectivity:
-- Credentials validation
-- API connectivity and response times
-- Model information
-
+This script only tests Google Cloud API connectivity.
 For translation quality testing, use test_translate.py with model="google/translation-llm"
-
-Authentication:
-    Set up credentials before running:
+Before running, set up credentials:
     export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 """
 
@@ -75,18 +67,10 @@ def run_connectivity_test():
 
 
 if __name__ == "__main__":
-    print("=" * 80)
     print("Google Cloud API - Connectivity Tests")
-    print("=" * 80)
     print()
 
     if not run_connectivity_test():
         print("\n⚠ Test failed. Set GOOGLE_APPLICATION_CREDENTIALS and try again.")
         print(f'   export GOOGLE_APPLICATION_CREDENTIALS="{CREDENTIALS_FILE}"')
         exit(1)
-
-    print("\n" + "=" * 80)
-    print("All connectivity tests completed!")
-    print("=" * 80)
-    print("\nFor translation quality testing, run:")
-    print("  python test_scripts/test_translate.py")
