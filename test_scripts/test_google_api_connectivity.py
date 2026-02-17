@@ -1,13 +1,18 @@
 """
-This script only tests Google Cloud API connectivity.
+Test Google Cloud API connectivity.
+
 For translation quality testing, use test_translate.py with model="google/translation-llm"
+
 Before running, set up credentials:
     export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+
+Usage:
+    test_google_api_connectivity.py
 """
 
 import os
+import pathlib
 import time
-from pathlib import Path
 
 from google.cloud import translate_v3
 
@@ -18,12 +23,16 @@ TEST_TEXT = "Hello World"
 
 
 def run_connectivity_test():
-    """Run Google Cloud API connectivity test."""
+    """
+    Run Google Cloud API connectivity test.
+
+    Returns True if test passes, False otherwise.
+    """
     # Check credentials
     creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     if creds_path:
         print(f"✓ GOOGLE_APPLICATION_CREDENTIALS set: {creds_path}")
-        if Path(creds_path).exists():
+        if pathlib.Path(creds_path).exists():
             print("✓ Credentials file exists")
         else:
             print(f"✗ Credentials file not found at {creds_path}")
@@ -66,7 +75,7 @@ def run_connectivity_test():
         return False
 
 
-if __name__ == "__main__":
+def main():
     print("Google Cloud API - Connectivity Tests")
     print()
 
@@ -74,3 +83,7 @@ if __name__ == "__main__":
         print("\n⚠ Test failed. Set GOOGLE_APPLICATION_CREDENTIALS and try again.")
         print(f'   export GOOGLE_APPLICATION_CREDENTIALS="{CREDENTIALS_FILE}"')
         exit(1)
+
+
+if __name__ == "__main__":
+    main()
