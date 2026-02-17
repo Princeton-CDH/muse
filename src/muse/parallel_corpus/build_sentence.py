@@ -29,6 +29,23 @@ SUPPORTED_LANGUAGES = {
     "Spanish": "es",
 }
 
+def remove_outer_quotes(text: str) -> tuple[str, str]:
+    """
+    For an input text beginning with a quoted passage (with double quotes).
+    Extracted and return the quoted passage from the text that follows it.
+    When the input does not contain a quote, this returns the input text and
+    an empty string.
+
+    Example:
+        - '"Quote" - text after quote.' --> ("Quote", " - text after quote.")
+        - 'There is no quote' --> ("There is no quote", "")
+
+    Returns a tuple of the quoted text and the text after the quote.
+    """
+    if text.startswith('"') and '"' in text[1:]:
+        return text[1:].rsplit('"', maxsplit=1)
+    
+    return text, ""
 
 def extract_text_data(text_record: dict[str, str|list[str]]) -> tuple[str, str]:
     """
@@ -46,19 +63,40 @@ def extract_text_data(text_record: dict[str, str|list[str]]) -> tuple[str, str]:
     text = ftfy.fix_text(body).strip()
     cite = ""
 
-    # If there are links, assume they form part of the citation
+    # If there are links, assume the first link corresponds to the citation
     if text_record["links"]:
-        # Use final occurrence of first link to form initial text-citation split
         link_text = ftfy.fix_text(text_record["links"][0])
-        pre_link, post_link = text.rsplit(link_text, maxsplit=1)
-        text = pre_link
-        cite = link_text + post_link
+
+        # Split on final instance of citation
+        text, post_cite = text.rsplit(link_text, maxsplit=1)
+        cite = link_text + post_cite
+    
     # Check for quotation marks to demarcate the quoted text from the citation
-    if text.startswith('"') and '"' in text[1:]:
-        text, pfx_cite = text[1:].rsplit('"', maxsplit=1)
-        cite = pfx_cite + cite
-    # Remove leading and trailing whitespace from both the text and the citation
-    return text.strip(), cite.strip()
+    text, post_quote = remove_outer_quotes(text)
+    text = text.strip()
+    cite = (post_quote + cite).strip()
+
+    # Check for multiple quoted passages (assume quotations use double quotes)
+    ## Quotes and citations will be spit by two new lines
+    if text_record["links"] and link_text in text:
+        # Parentheses let us also capture the citation text
+        inner_cite_re = re.compile(rf'"([^"]+{re.escape(link_text)}[^"]+)"')
+       
+        new_text = ""
+        for i, split in enumerate(inner_cite_re.split(text)):
+            split = split.strip()
+            if i == 0:
+                # First quote
+                new_text = split
+            elif i % 2 == 0:
+                # Later quotes
+                new_text += "\n\n" + split
+            else:
+                # Citation
+                cite = f"{split}\n\n{cite}"
+        text = new_text
+
+    return text, cite
 
 
 def get_parallel_texts(term_record) -> list[dict[str, str]]:
