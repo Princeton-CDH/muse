@@ -5,11 +5,12 @@ to English and vice versa.
 
 The translate() function provides a unified interface for translating text across
 multiple models. Model-specific functions (hymt_translate, nllb_translate,
-madlad_translate) are also available for direct use.
+madlad_translate, google_cloud_translate) are also available for direct use.
 """
 
 from timeit import default_timer as timer
 
+from google.cloud import translate_v3
 from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
@@ -28,6 +29,7 @@ SUPPORTED_MODELS = {
     "tencent/HY-MT1.5-7B": "hymt",
     "facebook/nllb-200-3.3B": "nllb",
     "google/madlad400-7b-mt": "madlad",
+    "google/translation-llm": "google_cloud",
 }
 
 
@@ -217,6 +219,98 @@ def madlad_translate(
     return tr_text
 
 
+def google_cloud_translate(
+    src_lang: str,
+    tgt_lang: str,
+    text: str,
+    project_id: str = "cdh-muse",
+    region: str = "us-central1",
+    credentials_path: str | None = None,
+    verbose: bool = False,
+) -> str:
+    """
+    Translate text using Google Cloud Translate API with Translation LLM (TLLM) model.
+    Languages are specified with their ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
+
+    The TLLM model is Google's latest state-of-the-art translation model, providing
+    the highest available quality of translation. It is language-agnostic and supports
+    all major languages without requiring special language mappings.
+
+    Authentication:
+        This API requires OAuth2 credentials. Authentication is handled in this order:
+        1. Service account JSON file (via credentials_path parameter)
+        2. GOOGLE_APPLICATION_CREDENTIALS environment variable
+        3. Application Default Credentials (gcloud auth application-default login)
+
+    Args:
+        src_lang: Source language ISO 639-1 code
+        tgt_lang: Target language ISO 639-1 code
+        text: Text to translate from source to target language
+        project_id: Google Cloud project ID (default: "cdh-muse")
+        region: Google Cloud region (default: "us-central1")
+        credentials_path: Path to service account JSON file (optional)
+        verbose: If True, print timing information
+
+    Returns:
+        Translated text as a string
+
+    Raises:
+        ValueError: If project ID is missing
+        Exception: If API call fails (authentication, network, etc.)
+    """
+    if not project_id:
+        raise ValueError("Google Cloud project ID is required.")
+
+    # Initialize the Translation client
+    if verbose:
+        start = timer()
+
+    # Create client with credentials if provided
+    if credentials_path:
+        from google.oauth2 import service_account
+
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path
+        )
+        client = translate_v3.TranslationServiceClient(credentials=credentials)
+    else:
+        # Use default credentials (from GOOGLE_APPLICATION_CREDENTIALS env var or gcloud)
+        client = translate_v3.TranslationServiceClient()
+
+    if verbose:
+        print(
+            f"Initialized Google Cloud Translate client in {timer() - start:.2f} seconds"
+        )
+
+    # Construct the parent and model paths
+    parent = f"projects/{project_id}/locations/{region}"
+    model_path = f"{parent}/models/general/translation-llm"
+
+    # Call the API
+    if verbose:
+        start = timer()
+
+    try:
+        response = client.translate_text(
+            contents=[text],
+            target_language_code=tgt_lang,
+            source_language_code=src_lang,
+            parent=parent,
+            model=model_path,
+            mime_type="text/plain",
+        )
+    except Exception as e:
+        raise Exception(f"Google Cloud Translate API call failed: {e}") from e
+
+    if verbose:
+        print(f"Received translation response in {timer() - start:.2f} seconds")
+
+    # Extract translated text from response
+    translated_text = response.translations[0].translated_text
+
+    return translated_text
+
+
 def translate(
     model: str,
     src_lang: str,
@@ -225,15 +319,16 @@ def translate(
     verbose: bool = False,
 ) -> str:
     """
-    Translate text using a specified HuggingFace translation model. This function
-    provides a unified interface for translating text across multiple translation
-    models by routing to the appropriate model-specific implementation based on the
-    model parameter.
+    Translate text using a specified translation model. This function provides a
+    unified interface for translating text across multiple translation models by
+    routing to the appropriate model-specific implementation based on the model
+    parameter.
 
     Supported models:
         - tencent/HY-MT1.5-7B: Tencent's Hunyuan Translation Model v1.5 (7B)
         - facebook/nllb-200-3.3B: Meta's No Language Left Behind (3.3B)
         - google/madlad400-7b-mt: Google's MADLAD-400 (7B)
+        - google/translation-llm: Google Cloud Translation LLM (TLLM)
 
     Languages are specified using ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
     Language validation is delegated to the model-specific functions, so supported
@@ -241,7 +336,7 @@ def translate(
     parameter internally, but it is accepted for API consistency.
 
     Args:
-        model: HuggingFace model identifier (must be one of the supported models)
+        model: Model identifier (must be one of the supported models)
         src_lang: Source language ISO 639-1 code
         tgt_lang: Target language ISO 639-1 code
         text: Text to translate from source to target language
@@ -269,6 +364,8 @@ def translate(
     elif model_type == "madlad":
         # MADLAD does not use src_lang parameter
         return madlad_translate(tgt_lang, text, model, verbose)
+    elif model_type == "google_cloud":
+        return google_cloud_translate(src_lang, tgt_lang, text, verbose=verbose)
     else:
         # This should never happen if SUPPORTED_MODELS is correctly maintained
         raise ValueError(f"Unknown model type: {model_type}")
