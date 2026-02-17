@@ -232,31 +232,11 @@ def google_cloud_translate(
     Translate text using Google Cloud Translate API with Translation LLM (TLLM) model.
     Languages are specified with their ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
 
-    The TLLM model is Google's latest state-of-the-art translation model, providing
-    the highest available quality of translation. It is language-agnostic and supports
-    all major languages without requiring special language mappings.
-
     Authentication:
         This API requires OAuth2 credentials. Authentication is handled in this order:
         1. Service account JSON file (via credentials_path parameter)
         2. GOOGLE_APPLICATION_CREDENTIALS environment variable
         3. Application Default Credentials (gcloud auth application-default login)
-
-    Args:
-        src_lang: Source language ISO 639-1 code
-        tgt_lang: Target language ISO 639-1 code
-        text: Text to translate from source to target language
-        project_id: Google Cloud project ID (default: "cdh-muse")
-        region: Google Cloud region (default: "us-central1")
-        credentials_path: Path to service account JSON file (optional)
-        verbose: If True, print timing information
-
-    Returns:
-        Translated text as a string
-
-    Raises:
-        ValueError: If project ID is missing
-        Exception: If API call fails (authentication, network, etc.)
     """
     if not project_id:
         raise ValueError("Google Cloud project ID is required.")
