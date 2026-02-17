@@ -6,7 +6,7 @@ of the associated musical theoretical concept and English.
 Supported source languages: Chinese, Japanese, Portuguese, Spanish
 
 Usage:
-    build.py notion_terms.jsonl parallel-sentences.jsonl
+    build_sentence.py notion_terms.jsonl parallel_sentences.jsonl
 """
 
 import argparse
@@ -16,8 +16,6 @@ import sys
 
 import ftfy
 import orjsonl
-from collections import Counter
-
 
 # Index of supported languages.
 ## Currently maps language names to their ISO 639-1 code.
@@ -27,6 +25,7 @@ SUPPORTED_LANGUAGES = {
     "Portuguese": "pt",
     "Spanish": "es",
 }
+
 
 def remove_outer_quotes(text: str) -> tuple[str, str]:
     """
@@ -43,10 +42,11 @@ def remove_outer_quotes(text: str) -> tuple[str, str]:
     """
     if text.startswith('"') and '"' in text[1:]:
         return text[1:].rsplit('"', maxsplit=1)
-    
+
     return text, ""
 
-def extract_text_data(text_record: dict[str, str|list[str]]) -> tuple[str, str]:
+
+def extract_text_data(text_record: dict[str, str | list[str]]) -> tuple[str, str]:
     """
     Extract the text and its citation from a Notion "text" record for a parallel text.
     Input text records are assumed to have the following fields:
@@ -69,7 +69,7 @@ def extract_text_data(text_record: dict[str, str|list[str]]) -> tuple[str, str]:
         # Split on final instance of citation
         text, post_cite = text.rsplit(link_text, maxsplit=1)
         cite = link_text + post_cite
-    
+
     # Check for quotation marks to demarcate the quoted text from the citation
     text, post_quote = remove_outer_quotes(text)
     text = text.strip()
@@ -80,7 +80,7 @@ def extract_text_data(text_record: dict[str, str|list[str]]) -> tuple[str, str]:
     if text_record["links"] and link_text in text:
         # Parentheses let us also capture the citation text
         inner_cite_re = re.compile(rf'"([^"]+{re.escape(link_text)}[^"]+)"')
-       
+
         new_text = ""
         for i, split in enumerate(inner_cite_re.split(text)):
             split = split.strip()
@@ -105,8 +105,8 @@ def get_parallel_texts(term_record) -> list[dict[str, str]]:
     Returns a list of parallel text records.
     """
     src_re = re.compile(rf"{term_record['lang']} (?P<label>[A-D]):")
-    eng_re = re.compile(f"English (?P<label>[A-D]):")
-    
+    eng_re = re.compile("English (?P<label>[A-D]):")
+
     src_texts = {}
     eng_texts = {}
     for comment in term_record["comments"]:
@@ -120,7 +120,7 @@ def get_parallel_texts(term_record) -> list[dict[str, str]]:
         if match:
             eng_texts[match.group("label")] = comment
             continue
-    
+
     # Build parallel text records
     parallel_texts = []
     for label in src_texts:
@@ -157,10 +157,8 @@ def build_sentence_parallel_corpus(in_jsonl: pathlib.Path, out_jsonl: pathlib.Pa
         for parallel_text in get_parallel_texts(rec):
             count += 1
             entry = (
-                {"id": count, "lang": lang_code} |
-                parallel_text |
-                {"term": rec["term"]}
-            ) 
+                {"id": count, "lang": lang_code} | parallel_text | {"term": rec["term"]}
+            )
             entries.append(entry)
 
     orjsonl.save(out_jsonl, entries)
@@ -175,7 +173,7 @@ def main():
     if not parsed.input.is_file():
         print(f"ERROR: {parsed.input} does not exist")
         sys.exit(1)
-        
+
     if parsed.output.is_file():
         print(f"ERROR: {parsed.output} exists. Not overwriting")
         sys.exit(1)
