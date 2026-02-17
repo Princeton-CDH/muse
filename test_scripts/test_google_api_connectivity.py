@@ -1,7 +1,7 @@
 """
-Google Cloud Translate API - Infrastructure and Connectivity Tests
+Google Cloud API - Connectivity Tests
 
-This script tests Google Cloud API-specific functionality:
+This script tests Google Cloud API connectivity and infrastructure:
 - Authentication and credentials validation
 - API connectivity and response times
 - API response metadata
@@ -102,7 +102,7 @@ def test_api_metadata():
 
 if __name__ == "__main__":
     print("=" * 80)
-    print("Google Cloud Translate API - Infrastructure Tests")
+    print("Google Cloud API - Connectivity Tests")
     print("=" * 80)
 
     # Check credentials first
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     test_api_metadata()
 
     print("\n" + "=" * 80)
-    print("All infrastructure tests completed!")
+    print("All connectivity tests completed!")
     print("=" * 80)
     print("\nFor translation quality testing, run:")
     print("  python test_scripts/test_translate.py")
