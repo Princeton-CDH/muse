@@ -1,9 +1,8 @@
 """
-Compute ChrF (Character n-gram F-score) metric for machine translation evaluation.
+Metrics for evaluating machine translation quality.
 
-ChrF is an n-gram based MT metric that measures translation quality by comparing
-character n-grams between the translation and reference text. It is particularly
-effective for morphologically rich languages and does not require tokenization.
+This module provides functions for computing various MT evaluation metrics
+including ChrF, and potentially COMET, BLEU, and others in the future.
 """
 
 import evaluate
@@ -25,11 +24,6 @@ def compute_chrf(
         ChrF score as a float in the range [0, 100], where 0 indicates no match
         and 100 indicates a perfect match.
     """
-    if not tr_text or not tr_text.strip():
-        raise ValueError("Translation text cannot be empty")
-    if not ref_text or not ref_text.strip():
-        raise ValueError("Reference text cannot be empty")
-
     chrf_metric = evaluate.load("chrf")
     result = chrf_metric.compute(
         predictions=[tr_text],

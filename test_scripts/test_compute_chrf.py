@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test script for compute_chrf() function.
 
@@ -10,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from muse.metrics import compute_chrf
+from muse.translation.metrics import compute_chrf
 
 
 def main():
