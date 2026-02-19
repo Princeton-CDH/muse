@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
 """
 Generate machine translation corpus from parallel text corpus.
 
 This script processes a parallel text corpus (JSONL format) and generates
 machine translations using HuggingFace models. For each input record, it
 produces two translations: original→English and English→original.
+
+Each output record represents a single translation with fields: tr_id, pair_id,
+model, src_lang, tr_lang, src_text, ref_text, tr_text.
 
 Usage:
     translate_corpus.py MODEL INPUT OUTPUT [--verbose]
@@ -15,43 +17,34 @@ import logging
 import pathlib
 import sys
 import uuid
+from collections.abc import Iterator
 
 import orjsonl
+from tqdm import tqdm
 
-from muse.translation.translate import translate
+from muse.translation.translate import SUPPORTED_MODELS, translate
 
 # Required fields in input parallel corpus records
 REQUIRED_FIELDS = ["id", "lang", "text", "en_tr"]
-# Log progress every N records
-PROGRESS_INTERVAL = 10
 
 logger = logging.getLogger(__name__)
 
 
-def validate_input_file(input_path: pathlib.Path) -> int:
+def validate_model(model: str) -> None:
     """
-    Validate input parallel corpus file.
+    Validate that the specified model is supported.
 
-    Returns the number of valid records found.
+    Args:
+        model: HuggingFace model identifier
+
+    Raises:
+        ValueError: If model is not supported
     """
-    if not input_path.exists():
-        raise FileNotFoundError(f"Input file not found: {input_path}")
-
-    record_count = 0
-    for line_num, record in enumerate(orjsonl.stream(input_path), 1):
-        # Check required fields
-        for field in REQUIRED_FIELDS:
-            if field not in record:
-                raise ValueError(f"Missing required field '{field}' at line {line_num}")
-            if not record[field] and field != "id":
-                raise ValueError(f"Empty field '{field}' at line {line_num}")
-
-        record_count += 1
-
-    if record_count == 0:
-        raise ValueError("Input file is empty")
-
-    return record_count
+    if model not in SUPPORTED_MODELS:
+        supported = list(SUPPORTED_MODELS.keys())
+        raise ValueError(
+            f"Unsupported model: {model}. Supported models: {', '.join(supported)}"
+        )
 
 
 def generate_translation_record(
@@ -66,7 +59,17 @@ def generate_translation_record(
     """
     Generate a machine translation record.
 
-    Returns a translation record dict with all required fields.
+    Args:
+        pair_id: ID of the source parallel text pair
+        model: HuggingFace model identifier
+        src_lang: Source language ISO 639-1 code
+        tgt_lang: Target language ISO 639-1 code
+        src_text: Source text to translate
+        ref_text: Reference translation text
+        verbose: If True, print timing and token information during translation
+
+    Returns:
+        Translation record dict with all required fields
     """
     # Generate unique ID
     tr_id = str(uuid.uuid4())
@@ -93,28 +96,41 @@ def generate_translation_record(
     }
 
 
-def process_parallel_corpus(
+def generate_translations(
     input_path: pathlib.Path,
-    output_path: pathlib.Path,
     model: str,
     verbose: bool = False,
-) -> tuple[int, int, int]:
+) -> Iterator[dict[str, str]]:
     """
-    Process parallel corpus and generate machine translations.
+    Generate translation records from parallel corpus.
 
-    Returns a tuple of (total_records, success_count, error_count).
+    Yields translation records one at a time for memory efficiency.
+    For each input record, generates two translations:
+    1. Original language → English
+    2. English → Original language
+
+    Args:
+        input_path: Path to input parallel corpus JSONL file
+        model: HuggingFace model identifier
+        verbose: If True, print timing and token information during translation
+
+    Yields:
+        Translation record dicts with fields: tr_id, pair_id, model,
+        src_lang, tr_lang, src_text, ref_text, tr_text
     """
-    total_records = 0
-    success_count = 0
-    error_count = 0
-
-    translations = []
     for record in orjsonl.stream(input_path):
-        total_records += 1
+        # Validate required fields at record level
+        missing_fields = [field for field in REQUIRED_FIELDS if field not in record]
+        if missing_fields:
+            logger.warning(
+                f"Skipping record {record.get('id', 'unknown')}: "
+                f"missing fields {missing_fields}"
+            )
+            continue
 
         # Translation 1: original language → English
         try:
-            tr1 = generate_translation_record(
+            src_to_en = generate_translation_record(
                 pair_id=record["id"],
                 model=model,
                 src_lang=record["lang"],
@@ -123,18 +139,16 @@ def process_parallel_corpus(
                 ref_text=record["en_tr"],
                 verbose=verbose,
             )
-            translations.append(tr1)
-            success_count += 1
+            yield src_to_en
         except Exception as e:
             logger.warning(
                 f"Translation failed for record {record['id']} "
                 f"({record['lang']}→en): {e}"
             )
-            error_count += 1
 
         # Translation 2: English → original language
         try:
-            tr2 = generate_translation_record(
+            en_to_src = generate_translation_record(
                 pair_id=record["id"],
                 model=model,
                 src_lang="en",
@@ -143,23 +157,64 @@ def process_parallel_corpus(
                 ref_text=record["text"],
                 verbose=verbose,
             )
-            translations.append(tr2)
-            success_count += 1
+            yield en_to_src
         except Exception as e:
             logger.warning(
                 f"Translation failed for record {record['id']} "
                 f"(en→{record['lang']}): {e}"
             )
-            error_count += 1
 
-        # Log progress
-        if total_records % PROGRESS_INTERVAL == 0:
-            logger.info(f"Processed {total_records} records")
 
-    # Write all translations to output file
-    orjsonl.save(output_path, translations)
+def save_translated_corpus(
+    input_path: pathlib.Path,
+    output_path: pathlib.Path,
+    model: str,
+    verbose: bool = False,
+) -> None:
+    """
+    Generate machine translations from parallel corpus and save to JSONL file.
 
-    return (total_records, success_count, error_count)
+    Reads parallel text records from input file, generates bidirectional
+    translations (original→English and English→original), and writes
+    translation records to output file. Each output record represents a
+    single translation with fields: tr_id, pair_id, model, src_lang, tr_lang,
+    src_text, ref_text, tr_text.
+
+    Uses streaming to handle large corpora efficiently without loading
+    all translations into memory.
+
+    Args:
+        input_path: Path to input parallel corpus JSONL file
+        output_path: Path to output machine translation corpus JSONL file
+        model: HuggingFace model identifier
+        verbose: If True, print timing and token information during translation
+    """
+    # Count total records for progress bar
+    total_records = sum(1 for _ in orjsonl.stream(input_path))
+
+    logger.info(f"Found {total_records} records in input file")
+    logger.info(f"Starting translation with model: {model}")
+
+    # Generate translations with progress bar
+    # Each input record produces 2 output records (bidirectional)
+    translations_generator = generate_translations(input_path, model, verbose)
+
+    try:
+        with tqdm(
+            total=total_records * 2, desc="Translating", unit="translation"
+        ) as pbar:
+
+            def progress_wrapper():
+                for translation in translations_generator:
+                    pbar.update(1)
+                    yield translation
+
+            orjsonl.save(output_path, progress_wrapper())
+    except KeyboardInterrupt:
+        logger.warning("\nProcessing interrupted by user")
+        raise
+
+    logger.info(f"Processing complete. Output written to: {output_path}")
 
 
 def main():
@@ -186,39 +241,32 @@ def main():
         level=log_level, format="%(levelname)s: %(message)s", stream=sys.stderr
     )
 
+    # Validate model early (fail fast)
+    try:
+        validate_model(parsed.model)
+    except ValueError as e:
+        logger.error(str(e))
+        sys.exit(1)
+
     # Validate input
     if not parsed.input.is_file():
-        print(f"ERROR: {parsed.input} does not exist")
+        logger.error(f"{parsed.input} does not exist")
         sys.exit(1)
 
     if parsed.output.is_file():
-        print(f"ERROR: {parsed.output} exists. Not overwriting")
+        logger.error(f"{parsed.output} exists. Not overwriting")
         sys.exit(1)
 
-    # Validate input file format
-    record_count = validate_input_file(parsed.input)
-    logger.info(f"Found {record_count} records in input file")
-
-    # Ensure output directory exists
-    parsed.output.parent.mkdir(parents=True, exist_ok=True)
-
     # Process corpus
-    logger.info(f"Starting translation with model: {parsed.model}")
     try:
-        total, success, errors = process_parallel_corpus(
+        save_translated_corpus(
             parsed.input, parsed.output, parsed.model, parsed.verbose
         )
     except KeyboardInterrupt:
-        logger.warning("\nProcessing interrupted by user")
         sys.exit(1)
-
-    # Log summary
-    logger.info("Processing complete")
-    logger.info(f"Total records: {total}")
-    logger.info(f"Successful translations: {success}/{total * 2}")
-    if errors > 0:
-        logger.warning(f"Failed translations: {errors}")
-    logger.info(f"Output written to: {parsed.output}")
+    except Exception as e:
+        logger.error(f"Processing failed: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
