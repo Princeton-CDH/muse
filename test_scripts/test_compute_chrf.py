@@ -10,7 +10,7 @@ from pathlib import Path
 
 import orjsonl
 
-from muse.translation.metrics import compute_chrf
+from muse.evaluation.metrics import compute_chrf
 
 
 def main():
