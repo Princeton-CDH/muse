@@ -27,12 +27,11 @@ SUPPORTED_LANGUAGES = {
 }
 
 
-def remove_outer_quotes(text: str) -> tuple[str, str]:
+def split_on_outer_quotes(text: str) -> tuple[str, str]:
     """
-    For an input text beginning with a quoted passage (with double quotes).
-    Extracted and return the quoted passage from the text that follows it.
-    When the input does not contain a quote, this returns the input text and
-    an empty string.
+    For an input text beginning with a quoted passage (with double quotes), extract
+    and return the quoted passage from the text that follows it. When the input
+    does not contain a quote, this returns the input text and an empty string.
 
     Example:
         - '"Quote" - text after quote.' --> ("Quote", " - text after quote.")
@@ -40,6 +39,7 @@ def remove_outer_quotes(text: str) -> tuple[str, str]:
 
     Returns a tuple of the quoted text and the text after the quote.
     """
+
     if text.startswith('"') and '"' in text[1:]:
         return text[1:].rsplit('"', maxsplit=1)
 
@@ -71,12 +71,12 @@ def extract_text_data(text_record: dict[str, str | list[str]]) -> tuple[str, str
         cite = link_text + post_cite
 
     # Check for quotation marks to demarcate the quoted text from the citation
-    text, post_quote = remove_outer_quotes(text)
+    text, post_quote = split_on_outer_quotes(text)
     text = text.strip()
     cite = (post_quote + cite).strip()
 
     # Check for multiple quoted passages (assume quotations use double quotes)
-    ## Quotes and citations will be spit by two new lines
+    ## Quotes and citations will be split by two new lines
     if text_record["links"] and link_text in text:
         # Parentheses let us also capture the citation text
         inner_cite_re = re.compile(rf'"([^"]+{re.escape(link_text)}[^"]+)"')
