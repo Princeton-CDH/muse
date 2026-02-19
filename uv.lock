@@ -1048,7 +1048,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "google-cloud-translate", specifier = ">=3.15.0" },
+    { name = "google-cloud-translate" },
     { name = "ipython" },
     { name = "marimo", specifier = ">=0.13.11" },
     { name = "marimo", extras = ["lsp"], marker = "extra == 'dev'" },

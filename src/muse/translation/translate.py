@@ -8,6 +8,7 @@ multiple models. Model-specific functions (hymt_translate, nllb_translate,
 madlad_translate, google_cloud_translate) are also available for direct use.
 """
 
+import os
 from timeit import default_timer as timer
 
 from google.cloud import translate_v3
@@ -223,69 +224,63 @@ def google_cloud_translate(
     src_lang: str,
     tgt_lang: str,
     text: str,
-    project_id: str = "cdh-muse",
-    region: str = "us-central1",
-    credentials_path: str | None = None,
     verbose: bool = False,
 ) -> str:
     """
     Translate text using Google Cloud Translate API with Translation LLM (TLLM) model.
     Languages are specified with their ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
 
-    Authentication:
-        This API requires OAuth2 credentials. Authentication is handled in this order:
-        1. Service account JSON file (via credentials_path parameter)
-        2. GOOGLE_APPLICATION_CREDENTIALS environment variable
-        3. Application Default Credentials (gcloud auth application-default login)
-    """
-    if not project_id:
-        raise ValueError("Google Cloud project ID is required.")
+    Requires gcloud CLI authentication. See docs/DEVELOPERNOTES.md for setup.
 
-    # Initialize the Translation client
+    Args:
+        src_lang: Source language ISO 639-1 code
+        tgt_lang: Target language ISO 639-1 code
+        text: Text to translate from source to target language
+        verbose: If True, print timing information
+
+    Returns:
+        Translated text as a string
+
+    Raises:
+        ValueError: If GOOGLE_CLOUD_PROJECT environment variable is not set
+    """
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    if not project_id:
+        raise ValueError(
+            "GOOGLE_CLOUD_PROJECT environment variable is not set. "
+            "Set it with: export GOOGLE_CLOUD_PROJECT='cdh-muse'"
+        )
+
+    region = os.environ.get("GOOGLE_CLOUD_REGION", "us-central1")
+
     if verbose:
         start = timer()
 
-    # Create client with credentials if provided
-    if credentials_path:
-        from google.oauth2 import service_account
-
-        credentials = service_account.Credentials.from_service_account_file(
-            credentials_path
-        )
-        client = translate_v3.TranslationServiceClient(credentials=credentials)
-    else:
-        # Use default credentials (from GOOGLE_APPLICATION_CREDENTIALS env var or gcloud)
-        client = translate_v3.TranslationServiceClient()
+    client = translate_v3.TranslationServiceClient()
 
     if verbose:
         print(
             f"Initialized Google Cloud Translate client in {timer() - start:.2f} seconds"
         )
 
-    # Construct the parent and model paths
     parent = f"projects/{project_id}/locations/{region}"
     model_path = f"{parent}/models/general/translation-llm"
 
-    # Call the API
     if verbose:
         start = timer()
 
-    try:
-        response = client.translate_text(
-            contents=[text],
-            target_language_code=tgt_lang,
-            source_language_code=src_lang,
-            parent=parent,
-            model=model_path,
-            mime_type="text/plain",
-        )
-    except Exception as e:
-        raise Exception(f"Google Cloud Translate API call failed: {e}") from e
+    response = client.translate_text(
+        contents=[text],
+        target_language_code=tgt_lang,
+        source_language_code=src_lang,
+        parent=parent,
+        model=model_path,
+        mime_type="text/plain",
+    )
 
     if verbose:
         print(f"Received translation response in {timer() - start:.2f} seconds")
 
-    # Extract translated text from response
     translated_text = response.translations[0].translated_text
 
     return translated_text

@@ -28,7 +28,7 @@ dependencies = [
   "numpy",
   "ipython", # Required by transformers for trainer functionality
   "transformers[torch, sentencepiece, tiktoken]",
-  "google-cloud-translate>=3.15.0",
+  "google-cloud-translate",
 ]
 
 [project.optional-dependencies]
