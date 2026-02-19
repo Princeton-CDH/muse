@@ -31,6 +31,9 @@ dependencies = [
   "google-cloud-translate",
   "orjsonl",
   "ftfy",
+  "evaluate",
+  "datasets",
+  "sacrebleu",
 ]
 
 [project.optional-dependencies]

@@ -3,4 +3,4 @@
 
 __version__ = "0.1.dev1"
 
-__all__ = ["__version__", "parallel_corpus", "translation"]
+__all__ = ["__version__", "evaluation", "parallel_corpus", "translation"]
