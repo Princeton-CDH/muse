@@ -13,16 +13,11 @@ def compute_chrf(
     ref_text: str,
 ) -> float:
     """
-    This function uses HuggingFace's evaluate library to compute ChrF score
-    for a translation against a reference translation.
+    Compute ChrF score for a translation against a reference translation using
+    HuggingFace's evaluate library.
 
-    Args:
-        tr_text: The translation text to be scored
-        ref_text: The reference translation
-
-    Returns:
-        ChrF score as a float in the range [0, 100], where 0 indicates no match
-        and 100 indicates a perfect match.
+    Returns a float in the range [0, 100], where 0 indicates no match and 100
+    indicates a perfect match.
     """
     chrf_metric = evaluate.load("chrf")
     result = chrf_metric.compute(
