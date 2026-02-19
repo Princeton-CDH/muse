@@ -11,6 +11,7 @@ madlad_translate, google_cloud_translate) are also available for direct use.
 import os
 from timeit import default_timer as timer
 
+import google.auth
 from google.cloud import translate_v3
 from transformers import (
     AutoModelForCausalLM,
@@ -244,13 +245,19 @@ def google_cloud_translate(
     Raises:
         ValueError: If GOOGLE_CLOUD_PROJECT environment variable is not set
     """
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    if not project_id:
-        raise ValueError(
-            "GOOGLE_CLOUD_PROJECT environment variable is not set. "
-            "Set it with: export GOOGLE_CLOUD_PROJECT='cdh-muse'"
+    # Get project ID from Application Default Credentials (ADC)
+    ## The environment variable GOOGLE_CLOUD_PROJECT takes priority over
+    ## the credential file produced by `gcloud auth application-default login`
+    try:
+        _, project_id = google.auth.default()
+    except Exception as e:
+        err_msg = (
+            "Issue loading Application Default Credentials (ADC). "
+            "See developer notes for more details."
         )
+        raise RuntimeError(err_msg) from e
 
+    # Default to us-central 1 if not set in environment
     region = os.environ.get("GOOGLE_CLOUD_REGION", "us-central1")
 
     if verbose:

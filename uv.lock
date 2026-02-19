@@ -1074,6 +1074,7 @@ name = "muse"
 source = { editable = "." }
 dependencies = [
     { name = "ftfy" },
+    { name = "google-auth" },
     { name = "google-cloud-translate" },
     { name = "ipython" },
     { name = "marimo" },
@@ -1099,6 +1100,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "ftfy" },
+    { name = "google-auth" },
     { name = "google-cloud-translate" },
     { name = "ipython" },
     { name = "marimo", specifier = ">=0.13.11" },
