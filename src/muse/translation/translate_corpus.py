@@ -2,7 +2,7 @@
 Generate machine translation corpus from parallel text corpus.
 
 This script processes a parallel text corpus (JSONL format) and generates
-machine translations using HuggingFace models. For each input record, it
+machine translations using supported translation models. For each input record, it
 produces two translations: original→English and English→original.
 
 Each output record represents a single translation with fields: tr_id, pair_id,
@@ -35,7 +35,7 @@ def validate_model(model: str) -> None:
     Validate that the specified model is supported.
 
     Args:
-        model: HuggingFace model identifier
+        model: Model identifier
 
     Raises:
         ValueError: If model is not supported
@@ -61,7 +61,7 @@ def generate_translation_record(
 
     Args:
         pair_id: ID of the source parallel text pair
-        model: HuggingFace model identifier
+        model: Model identifier
         src_lang: Source language ISO 639-1 code
         tgt_lang: Target language ISO 639-1 code
         src_text: Source text to translate
@@ -111,7 +111,7 @@ def generate_translations(
 
     Args:
         input_path: Path to input parallel corpus JSONL file
-        model: HuggingFace model identifier
+        model: Model identifier
         verbose: If True, print timing and token information during translation
 
     Yields:
@@ -186,7 +186,7 @@ def save_translated_corpus(
     Args:
         input_path: Path to input parallel corpus JSONL file
         output_path: Path to output machine translation corpus JSONL file
-        model: HuggingFace model identifier
+        model: Model identifier
         verbose: If True, print timing and token information during translation
     """
     # Count total records for progress bar
@@ -224,7 +224,7 @@ def main():
     )
     args.add_argument(
         "model",
-        help="HuggingFace model identifier (e.g., tencent/HY-MT1.5-7B)",
+        help="Model identifier (e.g., tencent/HY-MT1.5-7B, google/translation-llm)",
     )
     args.add_argument(
         "input", type=pathlib.Path, help="Input parallel corpus JSONL file"
