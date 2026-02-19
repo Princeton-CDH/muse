@@ -31,9 +31,9 @@ dependencies = [
   "google-cloud-translate",
   "orjsonl",
   "ftfy",
-  "evaluate>=0.4.0",
-  "datasets>=2.0.0", # required by evaluate
-  "sacrebleu>=2.0.0", # required by evaluate for ChrF metric
+  "evaluate",
+  "datasets",
+  "sacrebleu",
 ]
 
 [project.optional-dependencies]
