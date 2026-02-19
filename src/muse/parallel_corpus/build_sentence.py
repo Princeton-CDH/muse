@@ -29,9 +29,10 @@ SUPPORTED_LANGUAGES = {
 
 def split_on_outer_quotes(text: str) -> tuple[str, str]:
     """
-    For an input text beginning with a quoted passage (with double quotes), extract
-    and return the quoted passage from the text that follows it. When the input
-    does not contain a quote, this returns the input text and an empty string.
+    For an input text that begins with a quoted passage (with double quotes),
+    extract the quoted passage and the text that follows it by splitting on the
+    outermost double quotes. When the input does not contain a quote, this
+    returns the input text and an empty string.
 
     Example:
         - '"Quote" - text after quote.' --> ("Quote", " - text after quote.")
