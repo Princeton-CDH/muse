@@ -29,6 +29,8 @@ dependencies = [
   "ipython", # Required by transformers for trainer functionality
   "transformers[torch, sentencepiece, tiktoken]",
   "google-cloud-translate",
+  "orjsonl",
+  "ftfy",
 ]
 
 [project.optional-dependencies]
