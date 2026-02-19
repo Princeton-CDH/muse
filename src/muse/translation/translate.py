@@ -26,14 +26,6 @@ from muse.translation.nllb_langs import lang_index as nllb_lang_idx
 # Maximum number of (new) tokens a model can generate
 MAX_GEN_LEN = 2048
 
-# Supported models for the unified translate() function
-SUPPORTED_MODELS = {
-    "tencent/HY-MT1.5-7B": "hymt",
-    "facebook/nllb-200-3.3B": "nllb",
-    "google/madlad400-7b-mt": "madlad",
-    "google/translation-llm": "google_cloud",
-}
-
 
 def hymt_translate(
     src_lang: str,
@@ -307,10 +299,10 @@ def translate(
     parameter.
 
     Supported models:
-        - tencent/HY-MT1.5-7B: Tencent's Hunyuan Translation Model v1.5 (7B)
-        - facebook/nllb-200-3.3B: Meta's No Language Left Behind (3.3B)
-        - google/madlad400-7b-mt: Google's MADLAD-400 (7B)
-        - google/translation-llm: Google Cloud Translation LLM (TLLM)
+        - hymt: Tencent's Hunyuna Translation Model v1.5 (1.8B)
+        - madlad: Google's MADLAD-400 (3B)
+        - nllb: Meta's No Language Left Behind (3.3B)
+        - googe_tllm: Google Cloud Translation LLM (TLLM)
 
     Languages are specified using ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
     Language validation is delegated to the model-specific functions, so supported
@@ -331,23 +323,15 @@ def translate(
         ValueError: If the specified model is not supported, or if the source/target
                     languages are not supported by the chosen model
     """
-    # Validate model
-    if model not in SUPPORTED_MODELS:
-        supported = list(SUPPORTED_MODELS.keys())
-        raise ValueError(f"Unsupported model: {model}. Supported models: {supported}")
 
-    # Route to appropriate model-specific function
-    model_type = SUPPORTED_MODELS[model]
-
-    if model_type == "hymt":
-        return hymt_translate(src_lang, tgt_lang, text, model, verbose)
-    elif model_type == "nllb":
-        return nllb_translate(src_lang, tgt_lang, text, model, verbose)
-    elif model_type == "madlad":
+    if model == "hymt":
+        return hymt_translate(src_lang, tgt_lang, text, verbose=verbose)
+    elif model == "nllb":
+        return nllb_translate(src_lang, tgt_lang, text, verbose=verbose)
+    elif model == "madlad":
         # MADLAD does not use src_lang parameter
-        return madlad_translate(tgt_lang, text, model, verbose)
-    elif model_type == "google_cloud":
+        return madlad_translate(tgt_lang, text, verbose=verbose)
+    elif model == "google_tllm":
         return google_cloud_translate(src_lang, tgt_lang, text, verbose=verbose)
     else:
-        # This should never happen if SUPPORTED_MODELS is correctly maintained
-        raise ValueError(f"Unknown model type: {model_type}")
+        raise ValueError(f"Unsupported model: {model}")
