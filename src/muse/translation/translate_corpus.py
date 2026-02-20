@@ -22,29 +22,12 @@ from collections.abc import Iterator
 import orjsonl
 from tqdm import tqdm
 
-from muse.translation.translate import SUPPORTED_MODELS, translate
+from muse.translation.translate import translate
 
 # Required fields in input parallel corpus records
 REQUIRED_FIELDS = ["id", "lang", "text", "en_tr"]
 
 logger = logging.getLogger(__name__)
-
-
-def validate_model(model: str) -> None:
-    """
-    Validate that the specified model is supported.
-
-    Args:
-        model: Model identifier
-
-    Raises:
-        ValueError: If model is not supported
-    """
-    if model not in SUPPORTED_MODELS:
-        supported = list(SUPPORTED_MODELS.keys())
-        raise ValueError(
-            f"Unsupported model: {model}. Supported models: {', '.join(supported)}"
-        )
 
 
 def generate_translation_record(
@@ -118,16 +101,19 @@ def generate_translations(
         Translation record dicts with fields: tr_id, pair_id, model,
         src_lang, tr_lang, src_text, ref_text, tr_text
     """
-    for record in orjsonl.stream(input_path):
-        # Validate required fields at record level
-        missing_fields = [field for field in REQUIRED_FIELDS if field not in record]
-        if missing_fields:
-            logger.warning(
-                f"Skipping record {record.get('id', 'unknown')}: "
-                f"missing fields {missing_fields}"
-            )
-            continue
+    # Count total records for progress bar
+    total_records = sum(1 for _ in orjsonl.stream(input_path))
 
+    logger.info(f"Found {total_records} records in input file")
+    logger.info(f"Starting translation with model: {model}")
+
+    progress_records = tqdm(
+        orjsonl.stream(input_path),
+        total=total_records,
+        desc="Translating records",
+    )
+
+    for record in progress_records:
         # Translation 1: original language → English
         try:
             src_to_en = generate_translation_record(
@@ -140,11 +126,11 @@ def generate_translations(
                 verbose=verbose,
             )
             yield src_to_en
-        except Exception as e:
+        except Exception:
             logger.warning(
-                f"Translation failed for record {record['id']} "
-                f"({record['lang']}→en): {e}"
+                f"Translation failed for record {record['id']} ({record['lang']}→en)"
             )
+            raise
 
         # Translation 2: English → original language
         try:
@@ -158,11 +144,11 @@ def generate_translations(
                 verbose=verbose,
             )
             yield en_to_src
-        except Exception as e:
+        except Exception:
             logger.warning(
-                f"Translation failed for record {record['id']} "
-                f"(en→{record['lang']}): {e}"
+                f"Translation failed for record {record['id']} (en→{record['lang']})"
             )
+            raise
 
 
 def save_translated_corpus(
@@ -189,31 +175,7 @@ def save_translated_corpus(
         model: Model identifier
         verbose: If True, print timing and token information during translation
     """
-    # Count total records for progress bar
-    total_records = sum(1 for _ in orjsonl.stream(input_path))
-
-    logger.info(f"Found {total_records} records in input file")
-    logger.info(f"Starting translation with model: {model}")
-
-    # Generate translations with progress bar
-    # Each input record produces 2 output records (bidirectional)
-    translations_generator = generate_translations(input_path, model, verbose)
-
-    try:
-        with tqdm(
-            total=total_records * 2, desc="Translating", unit="translation"
-        ) as pbar:
-
-            def progress_wrapper():
-                for translation in translations_generator:
-                    pbar.update(1)
-                    yield translation
-
-            orjsonl.save(output_path, progress_wrapper())
-    except KeyboardInterrupt:
-        logger.warning("\nProcessing interrupted by user")
-        raise
-
+    orjsonl.save(output_path, generate_translations(input_path, model, verbose=verbose))
     logger.info(f"Processing complete. Output written to: {output_path}")
 
 
@@ -241,13 +203,6 @@ def main():
         level=log_level, format="%(levelname)s: %(message)s", stream=sys.stderr
     )
 
-    # Validate model early (fail fast)
-    try:
-        validate_model(parsed.model)
-    except ValueError as e:
-        logger.error(str(e))
-        sys.exit(1)
-
     # Validate input
     if not parsed.input.is_file():
         logger.error(f"{parsed.input} does not exist")
@@ -258,15 +213,7 @@ def main():
         sys.exit(1)
 
     # Process corpus
-    try:
-        save_translated_corpus(
-            parsed.input, parsed.output, parsed.model, parsed.verbose
-        )
-    except KeyboardInterrupt:
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Processing failed: {e}")
-        sys.exit(1)
+    save_translated_corpus(parsed.input, parsed.output, parsed.model, parsed.verbose)
 
 
 if __name__ == "__main__":

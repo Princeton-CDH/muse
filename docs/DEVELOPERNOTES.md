@@ -4,21 +4,35 @@
 
 The MUSE project supports Google Cloud's Translation LLM (TLLM) model for machine translation. This requires Google Cloud CLI (gcloud) setup and authentication.
 
-### Prerequisites
+### Installing Google Cloud CLI
 
-1. **Install Google Cloud CLI**
+Install `gcloud` using the [provided installation guide](https://cloud.google.com/sdk/docs/install).
 
-   - Follow instructions at: https://cloud.google.com/sdk/docs/install
-   - Verify installation: `gcloud --version`
+To verify the installation run:
 
-2. **Authenticate with Application Default Credentials**
+```bash
+gcloud --version
+```
 
-   ```bash
-   gcloud auth application-default login
-   ```
+### Authentication with Application Default Credentials (ADC)
 
-3. **Set required environment variables**
+For Google Cloud authentication, we will rely on the ADC file that can be generated with the following command:
 
-   ```bash
-   export GOOGLE_CLOUD_PROJECT="cdh-muse"
-   ```
+```bash
+gcloud auth application-default login
+```
+
+The ADC file is written to the following location:
+`~/.config/gcloud/application_default_credentials.json`
+
+#### Working with Multiple Google Cloud Projects
+
+If you’ve used `gcloud` for other projects, make sure that your local ADC file corresponds to the correct project. **Switching configs within `gcloud` will not update the ADC file.** However, `gcloud` will provide a warning if the activated (quota/billing) project does not match the one in the ADC file.
+
+To switch quote projects run:
+
+```bash
+gcloud auth application-default set-quote-project [project id]
+```
+
+Alternatively, a different credential file may be selected by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable. See the [Google ADC guide](https://docs.cloud.google.com/docs/authentication/application-default-credentials) for more information.
