@@ -298,7 +298,7 @@ def translate(
     parameter.
 
     Supported models:
-        - hymt: Tencent's Hunyuna Translation Model v1.5 (1.8B)
+        - hymt: Tencent's Hunyuan Translation Model v1.5 (1.8B)
         - madlad: Google's MADLAD-400 (3B)
         - nllb: Meta's No Language Left Behind (3.3B)
         - googe_tllm: Google Cloud Translation LLM (TLLM)
