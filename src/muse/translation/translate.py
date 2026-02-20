@@ -26,6 +26,13 @@ from muse.translation.nllb_langs import lang_index as nllb_lang_idx
 # Maximum number of (new) tokens a model can generate
 MAX_GEN_LEN = 2048
 
+# Workaround to reuse loaded models / tokenizers
+LOADED_MODEL = {
+    "model_name": None,
+    "model": None,
+    "tokenizer": None,
+}
+
 
 def hymt_translate(
     src_lang: str,
@@ -65,13 +72,18 @@ def hymt_translate(
             f"additional explanation.\n\n{text}"
         )
 
-    # Initialize tokenizer and model
-    if verbose:
-        start = timer()
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-    if verbose:
-        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    # Get tokenizer and model
+    ## Load model and tokenizer if it's not the currently loaded model
+    if model_name != LOADED_MODEL["model_name"]:
+        if verbose:
+            start = timer()
+        LOADED_MODEL["model_name"] = model_name
+        LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
+        LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(model_name)
+        if verbose:
+            print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    tokenizer = LOADED_MODEL["tokenizer"]
+    model = LOADED_MODEL["model"]
 
     # Generate model input
     messages = [{"role": "user", "content": prompt}]
@@ -125,13 +137,18 @@ def nllb_translate(
     if tgt_lang not in nllb_lang_idx:
         raise ValueError(f"Target language '{tgt_lang}' is not supported")
 
-    # Initialize tokenizer and model
-    if verbose:
-        start = timer()
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    if verbose:
-        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    # Get tokenizer and model
+    ## Load models if it's not the currently loaded model
+    if model_name != LOADED_MODEL["model_name"]:
+        if verbose:
+            start = timer()
+        LOADED_MODEL["model_name"] = model_name
+        LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
+        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        if verbose:
+            print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    tokenizer = LOADED_MODEL["tokenizer"]
+    model = LOADED_MODEL["model"]
 
     # Generate model input
     ## Set source language for proper tokenization
@@ -181,13 +198,18 @@ def madlad_translate(
     #       full list of the 419 supported languages and their codes:
     #       https://arxiv.org/pdf/2309.04662#subsection.A.1
 
-    # Initialize tokenizer and model
-    if verbose:
-        start = timer()
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    if verbose:
-        print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    # Get tokenizer and model
+    ## Load models if it's not the currently loaded model
+    if model_name != LOADED_MODEL["model_name"]:
+        if verbose:
+            start = timer()
+        LOADED_MODEL["model_name"] = model_name
+        LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
+        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        if verbose:
+            print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    tokenizer = LOADED_MODEL["tokenizer"]
+    model = LOADED_MODEL["model"]
 
     # Generate model input
     model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt")
