@@ -235,11 +235,10 @@ def google_cloud_translate(
         Translated text as a string
 
     Raises:
-        ValueError: If GOOGLE_CLOUD_PROJECT environment variable is not set
+        RuntimeError: If there is an issue loading the Google Application
+                     Default Credentials (ADC)
     """
-    # Get project ID from Application Default Credentials (ADC)
-    ## The environment variable GOOGLE_CLOUD_PROJECT takes priority over
-    ## the credential file produced by `gcloud auth application-default login`
+    # Get project id from Google Application Default Credentials
     try:
         _, project_id = google.auth.default()
     except Exception as e:

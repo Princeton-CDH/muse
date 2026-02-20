@@ -22,6 +22,17 @@ For Google Cloud authentication, we will rely on the ADC file that can be genera
 gcloud auth application-default login
 ```
 
-#### Dealing with Multiple Google Cloud Projects
+The ADC file is written to the following location:
+`~/.config/gcloud/application_default_credentials.json`
 
-If you’ve used `gcloud` for other projects, make sure that the ADC corresponds to the correct project. **Switching configs within `gcloud` will not update the ADC file.** However, `gcloud` will provide a warning if the activated (quota/billing) project does not match the one in the ADC file.
+#### Working with Multiple Google Cloud Projects
+
+If you’ve used `gcloud` for other projects, make sure that your local ADC file corresponds to the correct project. **Switching configs within `gcloud` will not update the ADC file.** However, `gcloud` will provide a warning if the activated (quota/billing) project does not match the one in the ADC file.
+
+To switch quote projects run:
+
+```bash
+gcloud auth application-default set-quote-project [project id]
+```
+
+Alternatively, a different credential file may be selected by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable. See the [Google ADC guide](https://docs.cloud.google.com/docs/authentication/application-default-credentials) for more information.
