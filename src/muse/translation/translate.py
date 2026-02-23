@@ -198,10 +198,7 @@ def madlad_translate(
     # Generate translation
     if verbose:
         start = timer()
-    outputs = model.generate(
-        **model_inputs,
-        max_length=MAX_GEN_LEN,
-    )
+    outputs = model.generate(**model_inputs)
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
     tr_tokens = outputs[0]
