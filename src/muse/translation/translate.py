@@ -23,15 +23,23 @@ from muse.translation.hymt_langs import lang_idx_en as hymt_lang_idx_en
 from muse.translation.hymt_langs import lang_idx_zh as hymt_lang_idx_zh
 from muse.translation.nllb_langs import lang_index as nllb_lang_idx
 
-# Maximum number of (new) tokens a model can generate
-MAX_GEN_LEN = 2048
-
 # Workaround to reuse loaded models / tokenizers
 LOADED_MODEL = {
     "model_name": None,
     "model": None,
     "tokenizer": None,
 }
+
+
+def get_max_new_tokens(input_token_len: int) -> int:
+    """
+    Helper function that sets the restriction for model generation based on
+    the model input's token length. This is used by all HuggingFace translate
+    functions.
+
+    Currently, it returns double the input length.
+    """
+    return 2 * input_token_len
 
 
 def hymt_translate(
@@ -101,7 +109,8 @@ def hymt_translate(
     if verbose:
         start = timer()
     outputs = model.generate(
-        tokenized_chat.to(model.device), max_new_tokens=MAX_GEN_LEN
+        tokenized_chat.to(model.device),
+        max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
@@ -164,7 +173,7 @@ def nllb_translate(
     outputs = model.generate(
         **model_inputs,
         forced_bos_token_id=tokenizer.convert_tokens_to_ids(nllb_lang_idx[tgt_lang]),
-        max_length=MAX_GEN_LEN,
+        max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
@@ -222,7 +231,7 @@ def madlad_translate(
         start = timer()
     outputs = model.generate(
         **model_inputs,
-        max_length=MAX_GEN_LEN,
+        max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:
         print(f"Generated model output in {timer() - start:.0f} seconds")
