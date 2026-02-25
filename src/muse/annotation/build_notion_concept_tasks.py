@@ -7,7 +7,8 @@ Example Usage:
 
     python out.jsonl notion-parallel-sents.jsonl --mt-corpus mt_corpus.jsonl
     python out.jsonl notion-parallel-sents.jsonl --mt-corpus mt1.jsonl mt2.jsonl
-"""
+    python build_notion_concept_tasks.py out.jsonl notion-parallel-sents.jsonl --mt-corpus mt_corpus.jsonl
+    python build_notion_concept_tasks.py out.jsonl notion-parallel-sents.jsonl --mt-corpus mt1.jsonl mt2.jsonl
 
 import argparse
 import pathlib
