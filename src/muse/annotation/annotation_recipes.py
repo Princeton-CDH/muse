@@ -2,7 +2,7 @@
 This module provides custom recipes for Prodigy annotation.
 
 Recipes:
-    * ``term_recipe``: Notion term evaluation recipe.
+    * ``concept-eval``: Notion concept evaluation recipe.
 
 Example Usage:
 
