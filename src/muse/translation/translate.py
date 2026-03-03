@@ -281,7 +281,11 @@ def gemma_translate(
         except Exception as e:
             # Check if error is related to authentication
             error_str = str(e).lower()
-            if "401" in error_str or "authentication" in error_str or "gated" in error_str:
+            if (
+                "401" in error_str
+                or "authentication" in error_str
+                or "gated" in error_str
+            ):
                 err_msg = (
                     f"Failed to load model '{model_name}'. This model requires "
                     "HuggingFace authentication. See docs/DEVELOPERNOTES.md for "
