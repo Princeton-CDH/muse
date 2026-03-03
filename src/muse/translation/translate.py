@@ -323,9 +323,19 @@ def gemma_translate(
     model = LOADED_MODEL["model"]
 
     # Generate model input using chat template
+    # TranslateGemma requires a specific message format with source/target language codes
     messages = [
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": text},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "source_lang_code": src_lang,
+                    "target_lang_code": tgt_lang,
+                    "text": text,
+                }
+            ],
+        }
     ]
     tokenized_chat = tokenizer.apply_chat_template(
         messages,
