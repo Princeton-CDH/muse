@@ -269,19 +269,6 @@ def gemma_translate(
     if tgt_lang not in gemma_lang_idx:
         raise ValueError(f"Target language '{tgt_lang}' is not supported")
 
-    # Get language names for prompt
-    src_lang_name = gemma_lang_idx[src_lang]
-    tgt_lang_name = gemma_lang_idx[tgt_lang]
-
-    # Construct prompt using TranslateGemma's recommended format
-    system_message = (
-        f"You are a professional {src_lang_name} ({src_lang}) to "
-        f"{tgt_lang_name} ({tgt_lang}) translator. Your goal is to "
-        f"accurately convey the meaning and nuances of the original "
-        f"{src_lang_name} text while adhering to {tgt_lang_name} "
-        f"grammar, vocabulary, and cultural sensitivities."
-    )
-
     # Get tokenizer and model
     # Load model and tokenizer if it's not the currently loaded model
     if model_name != LOADED_MODEL["model_name"]:
