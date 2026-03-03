@@ -65,6 +65,4 @@ To generate an access token:
 For gated models like TranslateGemma, you must accept the license:
 
 1. Visit the model page: [https://huggingface.co/google/translategemma-4b-it](https://huggingface.co/google/translategemma-4b-it)
-2. Click "Agree and access repository" to accept the license terms
-
-Alternatively, authentication can be configured by setting the `HF_TOKEN` environment variable. See the [HuggingFace authentication guide](https://huggingface.co/docs/huggingface_hub/quick-start#authentication) for more information.
+2. Click "Acknowledge license" to accept the license terms
