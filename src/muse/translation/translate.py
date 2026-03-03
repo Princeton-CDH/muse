@@ -262,20 +262,6 @@ def gemma_translate(
 
     Note: This model requires HuggingFace authentication. See docs/DEVELOPERNOTES.md
     for setup instructions.
-
-    Args:
-        src_lang: Source language ISO 639-1 code
-        tgt_lang: Target language ISO 639-1 code
-        text: Text to translate from source to target language
-        model_name: HuggingFace model identifier
-        verbose: If True, print timing information and token counts
-
-    Returns:
-        Translated text as a string
-
-    Raises:
-        ValueError: If source or target language is not supported
-        RuntimeError: If HuggingFace authentication is not properly configured
     """
     # Validate input languages
     if src_lang not in gemma_lang_idx:
