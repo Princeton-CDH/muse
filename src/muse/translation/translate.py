@@ -5,7 +5,8 @@ to English and vice versa.
 
 The translate() function provides a unified interface for translating text across
 multiple models. Model-specific functions (hymt_translate, nllb_translate,
-madlad_translate, google_cloud_translate) are also available for direct use.
+madlad_translate, gemma_translate, google_cloud_translate) are also available for
+direct use.
 """
 
 import os
@@ -19,6 +20,7 @@ from transformers import (
     AutoTokenizer,
 )
 
+from muse.translation.gemma_langs import lang_index as gemma_lang_idx
 from muse.translation.hymt_langs import lang_idx_en as hymt_lang_idx_en
 from muse.translation.hymt_langs import lang_idx_zh as hymt_lang_idx_zh
 from muse.translation.nllb_langs import lang_index as nllb_lang_idx
@@ -244,6 +246,116 @@ def madlad_translate(
     return tr_text
 
 
+def gemma_translate(
+    src_lang: str,
+    tgt_lang: str,
+    text: str,
+    model_name: str = "google/translategemma-4b-it",
+    verbose: bool = False,
+) -> str:
+    """
+    Translate text written in source language to target language with Google's
+    TranslateGemma model. Languages are specified with their ISO 639-1 codes.
+
+    By default, the 4B instruction-tuned model (google/translategemma-4b-it) is used,
+    but an alternative model may be specified via `model_name`.
+
+    Note: This model requires HuggingFace authentication. See docs/DEVELOPERNOTES.md
+    for setup instructions.
+
+    Args:
+        src_lang: Source language ISO 639-1 code
+        tgt_lang: Target language ISO 639-1 code
+        text: Text to translate from source to target language
+        model_name: HuggingFace model identifier
+        verbose: If True, print timing information and token counts
+
+    Returns:
+        Translated text as a string
+
+    Raises:
+        ValueError: If source or target language is not supported
+        RuntimeError: If HuggingFace authentication is not properly configured
+    """
+    # Validate input languages
+    if src_lang not in gemma_lang_idx:
+        raise ValueError(f"Source language '{src_lang}' is not supported")
+    if tgt_lang not in gemma_lang_idx:
+        raise ValueError(f"Target language '{tgt_lang}' is not supported")
+
+    # Get language names for prompt
+    src_lang_name = gemma_lang_idx[src_lang]
+    tgt_lang_name = gemma_lang_idx[tgt_lang]
+
+    # Construct prompt using TranslateGemma's recommended format
+    system_message = (
+        f"You are a professional {src_lang_name} ({src_lang}) to "
+        f"{tgt_lang_name} ({tgt_lang}) translator. Your goal is to "
+        f"accurately convey the meaning and nuances of the original "
+        f"{src_lang_name} text while adhering to {tgt_lang_name} "
+        f"grammar, vocabulary, and cultural sensitivities."
+    )
+
+    # Get tokenizer and model
+    # Load model and tokenizer if it's not the currently loaded model
+    if model_name != LOADED_MODEL["model_name"]:
+        if verbose:
+            start = timer()
+        try:
+            LOADED_MODEL["model_name"] = model_name
+            LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
+            LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(model_name)
+        except Exception as e:
+            # Check if error is related to authentication
+            error_str = str(e).lower()
+            if "401" in error_str or "authentication" in error_str or "gated" in error_str:
+                err_msg = (
+                    f"Failed to load model '{model_name}'. This model requires "
+                    "HuggingFace authentication. See docs/DEVELOPERNOTES.md for "
+                    "setup instructions."
+                )
+                raise RuntimeError(err_msg) from e
+            # Re-raise original exception if not authentication-related
+            raise
+        if verbose:
+            print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
+    tokenizer = LOADED_MODEL["tokenizer"]
+    model = LOADED_MODEL["model"]
+
+    # Generate model input using chat template
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": text},
+    ]
+    tokenized_chat = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_tensors="pt",
+    )
+    input_len = tokenized_chat[0].size()[0]
+    if verbose:
+        print(f"Input length: {input_len} tokens")
+
+    # Generate translation
+    if verbose:
+        start = timer()
+    outputs = model.generate(
+        tokenized_chat.to(model.device),
+        max_new_tokens=get_max_new_tokens(input_len),
+    )
+    if verbose:
+        print(f"Generated model output in {timer() - start:.0f} seconds")
+    # Model output begins with initial prompt
+    tr_tokens = outputs[0][input_len:]
+    if verbose:
+        # Report generated output length excluding the prompt prefix
+        print(f"Output length: {outputs[0].size()[0] - input_len} tokens")
+    tr_text = tokenizer.decode(tr_tokens, skip_special_tokens=True)
+
+    return tr_text
+
+
 def google_cloud_translate(
     src_lang: str,
     tgt_lang: str,
@@ -332,6 +444,7 @@ def translate(
         - hymt: Tencent's Hunyuan Translation Model v1.5 (1.8B)
         - madlad: Google's MADLAD-400 (3B)
         - nllb: Meta's No Language Left Behind (3.3B)
+        - gemma: Google's TranslateGemma (4B)
         - googe_tllm: Google Cloud Translation LLM (TLLM)
 
     Languages are specified using ISO 639-1 codes (e.g., "zh", "ja", "es", "en").
@@ -361,6 +474,8 @@ def translate(
     elif model == "madlad":
         # MADLAD does not use src_lang parameter
         return madlad_translate(tgt_lang, text, verbose=verbose)
+    elif model == "gemma":
+        return gemma_translate(src_lang, tgt_lang, text, verbose=verbose)
     elif model == "google_tllm":
         return google_cloud_translate(src_lang, tgt_lang, text, verbose=verbose)
     else:
