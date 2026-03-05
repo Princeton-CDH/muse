@@ -2,7 +2,7 @@
 
 ## Google Cloud Translation Setup
 
-The MUSE project supports Google Cloud's Translation LLM (TLLM) model for machine translation. This requires Google Cloud CLI (gcloud) setup and authentication.
+The MuSE project supports Google Cloud's Translation LLM (TLLM) model for machine translation. This requires Google Cloud CLI (gcloud) setup and authentication.
 
 ### Installing Google Cloud CLI
 
