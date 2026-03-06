@@ -103,7 +103,7 @@ def hymt_translate(
         add_generation_prompt=False,
         return_tensors="pt",
     )
-    input_len = len(tokenized_chat["input_ids"][0])
+    input_len = tokenized_chat[0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
 
@@ -111,7 +111,7 @@ def hymt_translate(
     if verbose:
         start = timer()
     outputs = model.generate(
-        **tokenized_chat,
+        tokenized_chat.to(model.device),
         max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:
