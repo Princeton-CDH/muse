@@ -39,7 +39,7 @@ Alternatively, a different credential file may be selected by setting the `GOOGL
 
 ## TranslateGemma Setup
 
-The MUSE project supports Google's TranslateGemma model for machine translation. This requires HuggingFace authentication and license acceptance.
+The MuSE project supports Google's TranslateGemma model for machine translation. This requires HuggingFace authentication and license acceptance.
 
 ### Installing HuggingFace CLI
 
