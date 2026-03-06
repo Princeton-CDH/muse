@@ -4,18 +4,18 @@ These CSVs are assumed to be within a single directory and have names correspond
 to their corresponding MTO article id (e.g., 30.4.12.csv)
 
 Usage:
-    build_paragraph.py input_dir parallel_paragraphs.jsonl 
+    build_paragraph.py input_dir parallel_paragraphs.jsonl
 """
+
 import argparse
 import csv
-from collections.abc import Iterator
 import pathlib
 import re
 import sys
+from collections.abc import Iterator
 
 import ftfy
 import orjsonl
-
 
 # Hard-coded mapping of article MTO ID to source language
 MTO_ID2LANG = {
@@ -35,14 +35,16 @@ def prepare_paragraph_text(text: str, par_id: str) -> str:
     """
     # Clean & normalize text with ftfy
     result = ftfy.fix_text(text)
-    # Remove bracketed paragraph id prefix 
+    # Remove bracketed paragraph id prefix
     if f"[{par_id}]" in result:
         result = result.split(f"[{par_id}]", maxsplit=1)[1]
     # Strip leading/trailing whitespace
     return result.strip()
 
 
-def extract_parallel_paragraphs(in_csv: pathlib.Path, doc_id:str="") -> Iterator[dict[str, str]]:
+def extract_parallel_paragraphs(
+    in_csv: pathlib.Path, doc_id: str = ""
+) -> Iterator[dict[str, str]]:
     """
     Extracts parallel paragraphs from a side-by-side translation CSV.
 
@@ -50,8 +52,8 @@ def extract_parallel_paragraphs(in_csv: pathlib.Path, doc_id:str="") -> Iterator
     """
     par_id_re = re.compile(r"\[(?P<par_id>\d+(\.\d+)?)\]")
     csv_fieldnames = ["label", "src_text", "en_tr"]
-    
-    with open(in_csv, newline='') as csvfile:
+
+    with in_csv.open(newline="") as csvfile:
         reader = csv.DictReader(csvfile, fieldnames=csv_fieldnames)
         for item in reader:
             match = par_id_re.match(item["label"])
@@ -65,9 +67,15 @@ def extract_parallel_paragraphs(in_csv: pathlib.Path, doc_id:str="") -> Iterator
                 else:
                     # Using doc_id for debugging
                     if doc_id:
-                        print(f"WARNING: Skipping {par_id} in {doc_id} due to empty paragraph", file=sys.stderr)
+                        print(
+                            f"WARNING: Skipping {par_id} in {doc_id} due to empty paragraph",
+                            file=sys.stderr,
+                        )
                     else:
-                        print(f"WARNING: Skipping {par_id} due to empty paragraph", file=sys.stderr)
+                        print(
+                            f"WARNING: Skipping {par_id} due to empty paragraph",
+                            file=sys.stderr,
+                        )
 
 
 def get_parallel_paragraphs(in_dir: pathlib.Path) -> Iterator[dict[str, int | str]]:
@@ -97,7 +105,9 @@ def get_parallel_paragraphs(in_dir: pathlib.Path) -> Iterator[dict[str, int | st
             print(f"WARNING: Unexpected CSV {csvfile}")
 
 
-def save_parallel_paragraph_corpus(in_dir: pathlib.Path, out_jsonl: pathlib.Path) -> None:
+def save_parallel_paragraph_corpus(
+    in_dir: pathlib.Path, out_jsonl: pathlib.Path
+) -> None:
     """
     Build parallel paragraph corpus (JSONL) from the side-by-side translation CSVs within
     the input directory.
