@@ -21,6 +21,8 @@ from prodigy.types import RecipeSettingsType, StreamType
 from prodigy.util import TASK_HASH_ATTR
 
 # Mapping of languages to number of required annotations
+## NOTE: Numbers determined by availability of annotators. Ideally, all languages
+##       would require the same number of annotations, but some have <2 annotators.
 LANG2N_ANNOT = {
     "es": 1,
     "ja": 2,
