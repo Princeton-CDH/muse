@@ -16,11 +16,11 @@ import google.auth
 from google.cloud import translate_v3
 from transformers import (
     AutoModelForCausalLM,
+    AutoModelForImageTextToText,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
 )
 
-from muse.translation.gemma_langs import lang_index as gemma_lang_idx
 from muse.translation.hymt_langs import lang_idx_en as hymt_lang_idx_en
 from muse.translation.hymt_langs import lang_idx_zh as hymt_lang_idx_zh
 from muse.translation.nllb_langs import lang_index as nllb_lang_idx
@@ -103,7 +103,7 @@ def hymt_translate(
         add_generation_prompt=False,
         return_tensors="pt",
     )
-    input_len = tokenized_chat[0].size()[0]
+    input_len = len(tokenized_chat["input_ids"][0])
     if verbose:
         print(f"Input length: {input_len} tokens")
 
@@ -111,7 +111,7 @@ def hymt_translate(
     if verbose:
         start = timer()
     outputs = model.generate(
-        tokenized_chat.to(model.device),
+        **tokenized_chat,
         max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:
@@ -263,12 +263,6 @@ def gemma_translate(
     Note: This model requires HuggingFace authentication. See docs/DEVELOPERNOTES.md
     for setup instructions.
     """
-    # Validate input languages
-    if src_lang not in gemma_lang_idx:
-        raise ValueError(f"Source language '{src_lang}' is not supported")
-    if tgt_lang not in gemma_lang_idx:
-        raise ValueError(f"Target language '{tgt_lang}' is not supported")
-
     # Get tokenizer and model
     # Load model and tokenizer if it's not the currently loaded model
     if model_name != LOADED_MODEL["model_name"]:
@@ -277,7 +271,7 @@ def gemma_translate(
         try:
             LOADED_MODEL["model_name"] = model_name
             LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
-            LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(model_name)
+            LOADED_MODEL["model"] = AutoModelForImageTextToText.from_pretrained(model_name)
         except Exception as e:
             # Check if error is related to authentication
             error_str = str(e).lower()
@@ -318,9 +312,10 @@ def gemma_translate(
         messages,
         tokenize=True,
         add_generation_prompt=True,
+        return_dict=True,
         return_tensors="pt",
-    )
-    input_len = tokenized_chat[0].size()[0]
+    ).to(model.device)
+    input_len = len(tokenized_chat["input_ids"][0])
     if verbose:
         print(f"Input length: {input_len} tokens")
 
@@ -328,7 +323,7 @@ def gemma_translate(
     if verbose:
         start = timer()
     outputs = model.generate(
-        tokenized_chat.to(model.device),
+        **tokenized_chat,
         max_new_tokens=get_max_new_tokens(input_len),
     )
     if verbose:

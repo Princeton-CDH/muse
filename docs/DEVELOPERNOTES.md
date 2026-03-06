@@ -1,6 +1,6 @@
 # Developer Notes
 
-## Google Cloud Translation Setup
+## Google Cloud Translation LLM (TLLM) Setup
 
 The MuSE project supports Google Cloud's Translation LLM (TLLM) model for machine translation. This requires Google Cloud CLI (gcloud) setup and authentication.
 
@@ -37,28 +37,44 @@ gcloud auth application-default set-quote-project [project id]
 
 Alternatively, a different credential file may be selected by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable. See the [Google ADC guide](https://docs.cloud.google.com/docs/authentication/application-default-credentials) for more information.
 
-## HuggingFace Authentication Setup
+## TranslateGemma Setup
 
 The MUSE project supports Google's TranslateGemma model for machine translation. This requires HuggingFace authentication and license acceptance.
+
+### Installing HuggingFace CLI
+
+Install the HuggingFace CLI using pip:
+
+```bash
+pip install huggingface-hub
+```
+
+Verify installation:
+
+```bash
+hf --version
+```
+
+### Generating an Access Token
+
+To generate an access token:
+
+1. Visit [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. Click "New token" and select "Read" access type
+3. Copy the token and use it with `hf auth login`
+
+For more information on security tokens, see the [HuggingFace documentation](https://huggingface.co/docs/hub/security-tokens).
 
 ### Authentication with HuggingFace CLI
 
 For HuggingFace authentication, use the HuggingFace CLI to login with your access token:
 
 ```bash
-huggingface-cli login
+hf auth login
 ```
 
 The token is stored in the following location:
 `~/.cache/huggingface/token`
-
-#### Generating an Access Token
-
-To generate an access token:
-
-1. Visit [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-2. Click "New token" and select "Read" access type
-3. Copy the token and use it with `huggingface-cli login`
 
 #### Accepting Model License
 
