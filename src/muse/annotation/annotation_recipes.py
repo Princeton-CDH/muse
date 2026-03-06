@@ -9,8 +9,8 @@ Example Usage:
     prodigy concept-eval muse_concepts notion-concept-tasks.jsonl -F annotation_recipes.py
 """
 
-from collections.abc import Iterator
 import pathlib
+from collections.abc import Iterator
 
 import spacy
 from prodigy import log, set_hashes
@@ -19,7 +19,6 @@ from prodigy.components.stream import get_stream
 from prodigy.core import Arg, Controller, recipe
 from prodigy.types import RecipeSettingsType, StreamType
 from prodigy.util import TASK_HASH_ATTR
-
 
 # Mapping of languages to number of required annotations
 LANG2N_ANNOT = {
@@ -64,7 +63,7 @@ def add_questions(questions, stream: StreamType) -> Iterator[StreamType]:
 
 def get_lang_annotators(ctrl: Controller, lang: str) -> list[str]:
     """
-    Gathers the annotators for a specific language. 
+    Gathers the annotators for a specific language.
     """
     # Get all known session names
     annotators = ctrl.session_ids
@@ -113,14 +112,13 @@ def concept_eval_recipe(
         "Q3. Notes / observations",
     ]
 
-    q2_labels  = [
+    q2_labels = [
         {"id": "correct", "text": "Correct"},
         {"id": "partial", "text": "Partially correct"},
         {"id": "wrong", "text": "Incorrect"},
         {"id": "verbatim", "text": "Copied verbatim"},
         {"id": "missing", "text": "Missing / Omitted"},
     ]
-
 
     def validate_answer(eg) -> None:
         q1_spans = eg.get("spans", [])
