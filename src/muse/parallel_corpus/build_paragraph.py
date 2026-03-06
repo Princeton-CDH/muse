@@ -50,13 +50,16 @@ def extract_parallel_paragraphs(
 
     Yields partial parallel paragraph records (only text, en_tr, par_id fields)
     """
-    par_id_re = re.compile(r"\[(?P<par_id>\d+(\.\d+)?)\]")
+    # Input CSVs do not have headers
     csv_fieldnames = ["label", "src_text", "en_tr"]
+    # Labels (1st column) for paragraphs will have the following form: [par_id]
+    par_id_re = re.compile(r"\[(?P<par_id>\d+(\.\d+)?)\]")
 
     with in_csv.open(newline="") as csvfile:
         reader = csv.DictReader(csvfile, fieldnames=csv_fieldnames)
         for item in reader:
             match = par_id_re.match(item["label"])
+            # Only extract rows corresponding to paragraphs.
             if match:
                 par_id = match.group("par_id")
                 text = prepare_paragraph_text(item["src_text"], par_id)
@@ -123,7 +126,7 @@ def main():
 
     # Validate args
     if not parsed.input_dir.is_dir():
-        print(f"ERROR: {parsed.input_dir} does not exist", file=sys.stderr)
+        print(f"ERROR: directory {parsed.input_dir} does not exist", file=sys.stderr)
         sys.exit(1)
     if parsed.output.is_file():
         print(f"ERROR: {parsed.output} exists. Not overwriting.", file=sys.stderr)
