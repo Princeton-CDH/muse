@@ -271,7 +271,9 @@ def gemma_translate(
         try:
             LOADED_MODEL["model_name"] = model_name
             LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
-            LOADED_MODEL["model"] = AutoModelForImageTextToText.from_pretrained(model_name)
+            LOADED_MODEL["model"] = AutoModelForImageTextToText.from_pretrained(
+                model_name
+            )
         except Exception as e:
             # Check if error is related to authentication
             error_str = str(e).lower()
