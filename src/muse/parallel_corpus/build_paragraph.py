@@ -105,7 +105,7 @@ def get_parallel_paragraphs(in_dir: pathlib.Path) -> Iterator[dict[str, int | st
                 }
                 count += 1
         else:
-            print(f"WARNING: Unexpected CSV {csvfile}")
+            print(f"WARNING: Unexpected CSV {csvfile}", file=sys.stderr)
 
 
 def save_parallel_paragraph_corpus(
