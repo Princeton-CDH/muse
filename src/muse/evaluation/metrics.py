@@ -2,10 +2,11 @@
 Metrics for evaluating machine translation quality.
 
 This module provides functions for computing various MT evaluation metrics
-including ChrF, and potentially COMET, BLEU, and others in the future.
+including ChrF, COMET, and potentially BLEU and others in the future.
 """
 
 import evaluate
+import torch
 
 
 def compute_chrf(
@@ -25,5 +26,33 @@ def compute_chrf(
         references=[ref_text],
     )
     score = result["score"]
+
+    return score
+
+
+def compute_comet(
+    tr_text: str,
+    src_text: str,
+    ref_text: str,
+) -> float:
+    """
+    Compute COMET score for a translation using HuggingFace's evaluate library.
+
+    COMET (Crosslingual Optimized Metric for Evaluation of Translation) is an
+    LLM-based metric that evaluates machine translations by considering the
+    source text, reference translation, and machine translation.
+
+    Returns a float in the range [0, 1], where 0 indicates a poor translation
+    and 1 indicates a perfect translation.
+    """
+    comet_metric = evaluate.load("comet")
+    gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+    result = comet_metric.compute(
+        predictions=[tr_text],
+        references=[ref_text],
+        sources=[src_text],
+        gpus=gpus,
+    )
+    score = result["mean_score"]
 
     return score
