@@ -54,11 +54,14 @@ def compute_comet(
     and 1 indicates a perfect translation.
     """
     # Suppress stdout/stderr during model loading and computation
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
-        io.StringIO()
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        contextlib.redirect_stderr(io.StringIO()),
     ):
         comet_metric = evaluate.load("comet")
-        gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+        gpus = (
+            1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+        )
         result = comet_metric.compute(
             predictions=[tr_text],
             references=[ref_text],
