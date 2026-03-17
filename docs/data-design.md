@@ -83,3 +83,4 @@ To evaluate the machine translations generated during Phase 1, machine translati
 | tr_id | str | Machine translation record ID |
 | chrf | str | ChrF score for the translation |
 | comet | str | COMET score for the translation |
+| comet-kiwi | str | CometKiwi score for the translation |
