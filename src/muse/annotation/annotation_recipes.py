@@ -129,7 +129,7 @@ def concept_eval_recipe(
     ]
     ## Configuration
     config = {
-        "buttons": ["accept", "reject", "undo"],  # remove ignore button
+        "buttons": ["accept", "undo"],  # remove ignore and reject buttons
         "show_flag": True,  # show flag button to mark weird machine translations
         "honor_token_whitespace": True,  # reflect whitespace accurately (e.g. in case of leading/trailing spaces)
         "blocks": blocks,
