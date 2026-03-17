@@ -35,7 +35,7 @@ for logger_name in [
 warnings.filterwarnings("ignore")
 
 # Cache for loaded metrics to avoid reloading models
-_LOADED_METRICS = {
+LOADED_METRICS = {
     "chrf": None,
     "comet": None,
 }
