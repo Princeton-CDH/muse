@@ -5,8 +5,16 @@ This module provides functions for computing various MT evaluation metrics
 including ChrF, COMET, and potentially BLEU and others in the future.
 """
 
+import contextlib
+import io
+import os
+
 import evaluate
 import torch
+
+# Suppress verbose HuggingFace logging
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def compute_chrf(
@@ -45,14 +53,21 @@ def compute_comet(
     Returns a float in the range [0, 1], where 0 indicates a poor translation
     and 1 indicates a perfect translation.
     """
-    comet_metric = evaluate.load("comet")
-    gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
-    result = comet_metric.compute(
-        predictions=[tr_text],
-        references=[ref_text],
-        sources=[src_text],
-        gpus=gpus,
-    )
+    # Suppress stdout/stderr during model loading and computation
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        contextlib.redirect_stderr(io.StringIO()),
+    ):
+        comet_metric = evaluate.load("comet")
+        gpus = (
+            1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+        )
+        result = comet_metric.compute(
+            predictions=[tr_text],
+            references=[ref_text],
+            sources=[src_text],
+            gpus=gpus,
+        )
     score = result["mean_score"]
 
     return score
