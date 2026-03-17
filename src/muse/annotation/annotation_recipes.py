@@ -152,13 +152,12 @@ def concept_eval_recipe(
         Returns session-specific progress.
         """
         session_id = session.id
+
         # Determine the session language
         annot = session_id.split(ctrl.get_session_name(""), maxsplit=1)[1]
         session_lang = annot.split("_", maxsplit=1)[0]
 
-        n_annotated = ctrl.session_annotated_by_session[session_id]
-        n_total = lang_example_counts[session_lang]
-        return n_annotated / n_total
+        return session.total_annotated / lang_example_counts[session_lang]
 
     def set_stream_hashes(stream: StreamType) -> Iterator[StreamType]:
         """
