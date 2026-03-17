@@ -53,10 +53,10 @@ def compute_chrf(
     indicates a perfect match.
     """
     # Load metric once and cache it
-    if _LOADED_METRICS["chrf"] is None:
-        _LOADED_METRICS["chrf"] = evaluate.load("chrf")
+    if LOADED_METRICS["chrf"] is None:
+        LOADED_METRICS["chrf"] = evaluate.load("chrf")
 
-    chrf_metric = _LOADED_METRICS["chrf"]
+    chrf_metric = LOADED_METRICS["chrf"]
     result = chrf_metric.compute(
         predictions=[tr_text],
         references=[ref_text],
@@ -82,15 +82,15 @@ def compute_comet(
     and 1 indicates a perfect translation.
     """
     # Load metric once and cache it
-    if _LOADED_METRICS["comet"] is None:
+    if LOADED_METRICS["comet"] is None:
         # Suppress stdout/stderr during model loading
         with (
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
         ):
-            _LOADED_METRICS["comet"] = evaluate.load("comet")
+            LOADED_METRICS["comet"] = evaluate.load("comet")
 
-    comet_metric = _LOADED_METRICS["comet"]
+    comet_metric = LOADED_METRICS["comet"]
     gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
 
     # Suppress stdout/stderr during computation

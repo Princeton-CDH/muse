@@ -67,11 +67,13 @@ def evaluate_corpus(
             )
 
             # Write to CSV
-            writer.writerow({
-                "tr_id": record["tr_id"],
-                "chrf": chrf_score,
-                "comet": comet_score,
-            })
+            writer.writerow(
+                {
+                    "tr_id": record["tr_id"],
+                    "chrf": chrf_score,
+                    "comet": comet_score,
+                }
+            )
 
     logger.info(f"Evaluation complete. Results written to: {output_path}")
 
