@@ -115,11 +115,13 @@ def concept_eval_recipe(
     ]
 
     q2_labels = [
-        {"id": "correct", "text": "Correct"},
-        {"id": "partial", "text": "Partially correct"},
-        {"id": "wrong", "text": "Incorrect"},
-        {"id": "verbatim", "text": "Copied verbatim"},
-        {"id": "missing", "text": "Missing / Omitted"},
+        {"id": "correct", "text": "Correct translation"},
+        {"id": "translated", "text": "Should not translate"},
+        {"id": "missing", "text": "Omitted or missing"},
+        {"id": "ils", "text": "Incorrect lexical selection"},
+        {"id": "dit", "text": "Disambiguation issue in target"},
+        {"id": "untranslated", "text": "Incorrectly left untranslated"},
+        {"id": "other", "text": "Other error"},
     ]
 
     def validate_answer(eg) -> None:
