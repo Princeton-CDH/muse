@@ -7,14 +7,38 @@ including ChrF, COMET, and potentially BLEU and others in the future.
 
 import contextlib
 import io
+import logging
 import os
+import warnings
 
 import evaluate
 import torch
 
-# Suppress verbose HuggingFace logging
+# Suppress verbose HuggingFace and PyTorch Lightning logging
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+os.environ["PYTHONWARNINGS"] = "ignore"
+os.environ["PL_DISABLE_FORK"] = "1"
+
+# Suppress all PyTorch Lightning loggers
+for logger_name in [
+    "pytorch_lightning",
+    "lightning.pytorch",
+    "lightning.pytorch.utilities.rank_zero",
+    "lightning.pytorch.accelerators.mps",
+    "lightning.pytorch.core",
+]:
+    logging.getLogger(logger_name).setLevel(logging.ERROR)
+    logging.getLogger(logger_name).propagate = False
+
+warnings.filterwarnings("ignore")
+
+# Cache for loaded metrics to avoid reloading models
+_LOADED_METRICS = {
+    "chrf": None,
+    "comet": None,
+}
 
 
 def compute_chrf(
@@ -28,7 +52,11 @@ def compute_chrf(
     Returns a float in the range [0, 100], where 0 indicates no match and 100
     indicates a perfect match.
     """
-    chrf_metric = evaluate.load("chrf")
+    # Load metric once and cache it
+    if _LOADED_METRICS["chrf"] is None:
+        _LOADED_METRICS["chrf"] = evaluate.load("chrf")
+
+    chrf_metric = _LOADED_METRICS["chrf"]
     result = chrf_metric.compute(
         predictions=[tr_text],
         references=[ref_text],
@@ -53,15 +81,23 @@ def compute_comet(
     Returns a float in the range [0, 1], where 0 indicates a poor translation
     and 1 indicates a perfect translation.
     """
-    # Suppress stdout/stderr during model loading and computation
+    # Load metric once and cache it
+    if _LOADED_METRICS["comet"] is None:
+        # Suppress stdout/stderr during model loading
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            _LOADED_METRICS["comet"] = evaluate.load("comet")
+
+    comet_metric = _LOADED_METRICS["comet"]
+    gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+
+    # Suppress stdout/stderr during computation
     with (
         contextlib.redirect_stdout(io.StringIO()),
         contextlib.redirect_stderr(io.StringIO()),
     ):
-        comet_metric = evaluate.load("comet")
-        gpus = (
-            1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
-        )
         result = comet_metric.compute(
             predictions=[tr_text],
             references=[ref_text],
