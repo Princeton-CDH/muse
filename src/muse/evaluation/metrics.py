@@ -9,32 +9,20 @@ import contextlib
 import io
 import logging
 import os
-import warnings
 
 import evaluate
 import torch
 
-# Suppress verbose HuggingFace and PyTorch Lightning logging
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-os.environ["PYTHONWARNINGS"] = "ignore"
-os.environ["PL_DISABLE_FORK"] = "1"
+# Environment variable configuration for PyTorch and HuggingFace libraries
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizers parallelism to avoid deadlocks
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"  # Enable fallback for unsupported MPS operations
 
-# Suppress all PyTorch Lightning loggers
-for logger_name in [
-    "pytorch_lightning",
-    "lightning.pytorch",
-    "lightning.pytorch.utilities.rank_zero",
-    "lightning.pytorch.accelerators.mps",
-    "lightning.pytorch.core",
-]:
-    logging.getLogger(logger_name).setLevel(logging.ERROR)
-    logging.getLogger(logger_name).propagate = False
-
-warnings.filterwarnings("ignore")
+# Suppress PyTorch Lightning INFO messages
+# Note: PyTorch Lightning bypasses Python's logging module, so we suppress via stderr redirect
+logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 
 # Cache for loaded metrics to avoid reloading models
+# Note: Caching COMET model requires ~2GB RAM for the wmt22-comet-da model
 LOADED_METRICS = {
     "chrf": None,
     "comet": None,
@@ -49,7 +37,7 @@ def compute_chrf(
     Compute ChrF score for a translation against a reference translation using
     HuggingFace's evaluate library.
 
-    Returns a float in the range [0, 100], where 0 indicates no match and 100
+    Returns a float in the range [0, 1], where 0 indicates no match and 1
     indicates a perfect match.
     """
     # Load metric once and cache it
@@ -61,7 +49,8 @@ def compute_chrf(
         predictions=[tr_text],
         references=[ref_text],
     )
-    score = result["score"]
+    # Normalize score from 0-100 range to 0-1 range
+    score = result["score"] / 100
 
     return score
 
