@@ -14,8 +14,12 @@ import evaluate
 import torch
 
 # Environment variable configuration for PyTorch and HuggingFace libraries
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizers parallelism to avoid deadlocks
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"  # Enable fallback for unsupported MPS operations
+os.environ["TOKENIZERS_PARALLELISM"] = (
+    "false"  # Disable tokenizers parallelism to avoid deadlocks
+)
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = (
+    "1"  # Enable fallback for unsupported MPS operations
+)
 
 # Suppress PyTorch Lightning INFO messages
 # Note: PyTorch Lightning bypasses Python's logging module, so we suppress via stderr redirect
