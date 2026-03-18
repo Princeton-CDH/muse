@@ -20,9 +20,6 @@ from tqdm import tqdm
 
 from muse.evaluation.metrics import compute_chrf, compute_comet
 
-# Required fields in input machine translation corpus records
-REQUIRED_FIELDS = ["tr_id", "src_text", "ref_text", "tr_text"]
-
 logger = logging.getLogger(__name__)
 
 
@@ -98,7 +95,7 @@ def main():
     parsed = args.parse_args()
 
     # Setup logging
-    log_level = logging.DEBUG if parsed.verbose else logging.INFO
+    log_level = logging.DEBUG if parsed.verbose else logging.WARNING
     logging.basicConfig(
         level=log_level,
         format="%(levelname)s: %(message)s",
