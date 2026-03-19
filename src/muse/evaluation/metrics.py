@@ -9,6 +9,8 @@ import contextlib
 import io
 import logging
 import os
+import sys
+import warnings
 
 import evaluate
 import torch
@@ -21,9 +23,13 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = (
     "1"  # Enable fallback for unsupported MPS operations
 )
 
-# Suppress PyTorch Lightning INFO messages
-# Note: PyTorch Lightning bypasses Python's logging module, so we suppress via stderr redirect
-logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
+# Suppress PyTorch Lightning logging by disabling its loggers
+for logger_name in ["pytorch_lightning", "lightning", "lightning.pytorch"]:
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.CRITICAL)
+    logger.disabled = True
+
+warnings.filterwarnings("ignore", category=UserWarning, module="lightning")
 
 # Cache for loaded metrics to avoid reloading models
 # Note: Caching COMET model requires ~2GB RAM for the wmt22-comet-da model
@@ -86,17 +92,26 @@ def compute_comet(
     comet_metric = LOADED_METRICS["comet"]
     gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
 
-    # Suppress stdout/stderr during computation
-    with (
-        contextlib.redirect_stdout(io.StringIO()),
-        contextlib.redirect_stderr(io.StringIO()),
-    ):
+    # Suppress PyTorch Lightning INFO messages by redirecting stderr at file descriptor level
+    # This is necessary because PyTorch Lightning bypasses Python's logging system
+    _stderr_fd = sys.stderr.fileno()
+    _original_stderr_fd = os.dup(_stderr_fd)
+    _devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(_devnull_fd, _stderr_fd)
+
+    try:
         result = comet_metric.compute(
             predictions=[tr_text],
             references=[ref_text],
             sources=[src_text],
             gpus=gpus,
         )
+    finally:
+        # Restore original stderr
+        os.dup2(_original_stderr_fd, _stderr_fd)
+        os.close(_original_stderr_fd)
+        os.close(_devnull_fd)
+
     score = result["mean_score"]
 
     return score
