@@ -7,14 +7,30 @@ including ChrF, COMET, and potentially BLEU and others in the future.
 
 import contextlib
 import io
+import logging
 import os
 
 import evaluate
 import torch
 
-# Suppress verbose HuggingFace logging
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# Environment variable configuration for PyTorch and HuggingFace libraries
+os.environ["TOKENIZERS_PARALLELISM"] = (
+    "false"  # Disable tokenizers parallelism to avoid deadlocks
+)
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = (
+    "1"  # Enable fallback for unsupported MPS operations
+)
+
+# Suppress PyTorch Lightning INFO messages
+logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logging.WARNING)
+logging.getLogger("pytorch_lightning.utilities.migration").setLevel(logging.WARNING)
+
+# Cache for loaded metrics to avoid reloading models
+# Note: Caching COMET model requires ~2GB RAM for the wmt22-comet-da model
+LOADED_METRICS = {
+    "chrf": None,
+    "comet": None,
+}
 
 
 def compute_chrf(
@@ -25,15 +41,20 @@ def compute_chrf(
     Compute ChrF score for a translation against a reference translation using
     HuggingFace's evaluate library.
 
-    Returns a float in the range [0, 100], where 0 indicates no match and 100
+    Returns a float in the range [0, 1], where 0 indicates no match and 1
     indicates a perfect match.
     """
-    chrf_metric = evaluate.load("chrf")
+    # Load metric once and cache it
+    if LOADED_METRICS["chrf"] is None:
+        LOADED_METRICS["chrf"] = evaluate.load("chrf")
+
+    chrf_metric = LOADED_METRICS["chrf"]
     result = chrf_metric.compute(
         predictions=[tr_text],
         references=[ref_text],
     )
-    score = result["score"]
+    # Normalize score from 0-100 range to 0-1 range
+    score = result["score"] / 100
 
     return score
 
@@ -53,21 +74,24 @@ def compute_comet(
     Returns a float in the range [0, 1], where 0 indicates a poor translation
     and 1 indicates a perfect translation.
     """
-    # Suppress stdout/stderr during model loading and computation
-    with (
-        contextlib.redirect_stdout(io.StringIO()),
-        contextlib.redirect_stderr(io.StringIO()),
-    ):
-        comet_metric = evaluate.load("comet")
-        gpus = (
-            1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
-        )
-        result = comet_metric.compute(
-            predictions=[tr_text],
-            references=[ref_text],
-            sources=[src_text],
-            gpus=gpus,
-        )
+    # Load metric once and cache it
+    if LOADED_METRICS["comet"] is None:
+        # Suppress stdout/stderr during model loading
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            LOADED_METRICS["comet"] = evaluate.load("comet")
+
+    comet_metric = LOADED_METRICS["comet"]
+    gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
+
+    result = comet_metric.compute(
+        predictions=[tr_text],
+        references=[ref_text],
+        sources=[src_text],
+        gpus=gpus,
+    )
     score = result["mean_score"]
 
     return score
