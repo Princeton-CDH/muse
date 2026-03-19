@@ -29,7 +29,7 @@ logging.getLogger("pytorch_lightning.utilities.migration").setLevel(logging.WARN
 
 # Cache for loaded metrics to avoid reloading models
 # Note: Caching COMET model requires ~2GB RAM for the wmt22-comet-da model
-LOADED_METRICS = {
+LOADED_METRICS: dict[str, Any] = {
     "chrf": None,
     "comet": None,
     "cometkiwi": None,
