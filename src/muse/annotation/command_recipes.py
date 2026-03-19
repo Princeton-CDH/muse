@@ -7,7 +7,7 @@ Recipes:
       task at the language and annotator level.
 """
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 from prodigy.components.db import connect
 from prodigy.components.loaders import JSONL
@@ -21,7 +21,9 @@ from prodigy.util import msg
     "muse-task-progress",
     dataset=Arg(help="Prodigy dataset ID"),
     source=Arg(
-        "--source", "-s", help="Optional source data to use for progress calculation"
+        "--source",
+        "-s",
+        help="Optional source data JSONL to use for progress calculation",
     ),
 )
 def muse_task_progress(dataset: str, source: SourceType | None = None) -> None:
@@ -34,18 +36,20 @@ def muse_task_progress(dataset: str, source: SourceType | None = None) -> None:
 
     # Get language-specific translation counts if the source data is provided
     if source:
-        lang_tr_counts = Counter()
+        lang_tr_counts = defaultdict(int)
         for tr in JSONL(source):
             lang_tr_counts[tr["src_lang"]] += 1
 
     # Organize data for tables
-    lang_anno_counts = Counter()
+    ## Infer languages if source data is not provided
+    langs = set() if not source else lang_tr_counts.keys()
     annotations_by_session = defaultdict(list)
     for a in annotations:
         if "answer" not in a:
             # Skip entries without answers (hopefully won't encounter)
             continue
-        lang_anno_counts[a["src_lang"]] += 1
+        if not source:
+            langs.add(a["src_lang"])
         tr_id = a["tr_id"]
         session_name = a["_session_id"].split(f"{dataset}-")[-1]
         annotations_by_session[session_name].append(tr_id)
@@ -59,14 +63,22 @@ def muse_task_progress(dataset: str, source: SourceType | None = None) -> None:
         aligns.append("r")
     ## Build row data
     rows = []
-    for lang, n_annotations in sorted(lang_anno_counts.items()):
+    for lang in sorted(langs):
+        # Determine the (existing) annotators for the language
+        lang_annotators = [
+            s for s in annotations_by_session if s.startswith(f"{lang}_")
+        ]
+        # For each annotator, only count one annotation per translation
+        # NOTE: Generally, annotators should not annotate the same translation
+        #       multiple times, but it can happen.
+        n_annotations = sum(
+            len(set(annotations_by_session[la])) for la in lang_annotators
+        )
         row = [lang, n_annotations]
         if source:
-            # Number of annotators for the language (only counts those who've submitted an annotation)
-            n_annotators = sum(
-                1 for a in annotations_by_session if a.startswith(f"{lang}_")
-            )
-            total_expected = lang_tr_counts[lang] * n_annotators
+            n_annots = len(lang_annotators)
+            # If no annotators set total_expect to 1 to avoid divide by zero error
+            total_expected = lang_tr_counts[lang] * n_annots if n_annots else 1
             row.append(f"{n_annotations / total_expected * 100:.1f}%")
         rows.append(row)
     msg.table(
