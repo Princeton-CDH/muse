@@ -51,15 +51,17 @@ def get_lang_name(lang_code: str):
     """
     Returns language name for given language code
     """
-    if lang_code == "zh":
-        return "Chinese"
-    if lang_code == "ja":
-        return "Japanese"
-    if lang_code == "pt":
-        return "Portuguese"
-    if lang_code == "es":
-        return "Spanish"
-    raise ValueError(f"Unknown language code '{lang_code}'")
+    match lang_code:
+        case "zh":
+            return "Chinese"
+        case "ja":
+            return "Japanese"
+        case "pt":
+            return "Portuguese"
+        case "es":
+            return "Spanish"
+        case _:
+            raise ValueError(f"Unknown language code '{lang_code}'")
 
 
 def add_lang_name(stream: StreamType) -> Iterator[StreamType]:
@@ -116,7 +118,7 @@ def lang_task_router(ctrl: Controller, session_id: str, item: dict) -> list[str]
     instruct=Arg(
         "--instruct",
         "-I",
-        help="Optional intructions text or HTML file",
+        help="Optional instructions text or HTML file",
     ),
 )
 def concept_eval_recipe(
@@ -235,11 +237,14 @@ def concept_eval_recipe(
 
     def set_stream_hashes(stream: StreamType) -> Iterator[StreamType]:
         """
-        Set hashes for stream
+        Set custom hashes for stream. Overwrites existing hashes.
         """
         for ex in stream:
             yield set_hashes(
-                ex, input_keys=("tr_id"), task_keys=("questions", "spans", "options")
+                ex,
+                input_keys=("tr_id",),
+                task_keys=("questions", "spans", "options"),
+                overwrite=True,
             )
 
     def validate_answer(eg) -> None:
