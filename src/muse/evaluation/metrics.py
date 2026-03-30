@@ -9,11 +9,14 @@ import contextlib
 import io
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 import evaluate
 import torch
-from comet import download_model, load_from_checkpoint
+from comet import load_from_checkpoint
+from huggingface_hub import snapshot_download
+from huggingface_hub.errors import GatedRepoError, LocalTokenNotFoundError
 
 # Environment variable configuration for PyTorch and HuggingFace libraries
 os.environ["TOKENIZERS_PARALLELISM"] = (
@@ -118,51 +121,18 @@ def compute_cometkiwi(
     # Load model once and cache it
     if LOADED_METRICS["cometkiwi"] is None:
         try:
-            # Suppress stdout/stderr during model loading
-            with (
-                contextlib.redirect_stdout(io.StringIO()),
-                contextlib.redirect_stderr(io.StringIO()),
-            ):
-                model_path = download_model("Unbabel/wmt22-cometkiwi-da")
-                LOADED_METRICS["cometkiwi"] = load_from_checkpoint(model_path)
-        except Exception as e:
-            # Check if this is an authentication/gated model error
-            # The comet package wraps authentication errors in a KeyError with
-            # "not supported by COMET" message, so we need to check the cause chain
-            error_msg = str(e).lower()
-
-            # Check the exception cause chain for authentication-related errors
-            is_auth_error = False
-            current = e
-            while current is not None:
-                current_msg = str(current).lower()
-                if any(
-                    keyword in current_msg
-                    for keyword in [
-                        "403",
-                        "gated",
-                        "authentication",
-                        "authorized",
-                        "forbidden",
-                    ]
-                ):
-                    is_auth_error = True
-                    break
-                current = getattr(current, "__cause__", None)
-
-            # Also check if it's the specific "not supported" error from comet
-            # which typically indicates an authentication issue with gated models
-            if "not supported by comet" in error_msg or is_auth_error:
-                msg = (
-                    "Authentication required for CometKiwi model. "
-                    "Please:\n"
-                    "1. Visit https://huggingface.co/Unbabel/wmt22-cometkiwi-da and accept the license\n"
-                    "2. Run: hf auth login\n"
-                    "3. Enter your HuggingFace token when prompted"
-                )
-                raise RuntimeError(msg) from e
-            # Re-raise other errors
-            raise
+            model_path = snapshot_download(repo_id="Unbabel/wmt22-cometkiwi-da")
+            checkpoint_path = Path(model_path) / "checkpoints" / "model.ckpt"
+            LOADED_METRICS["cometkiwi"] = load_from_checkpoint(checkpoint_path)
+        except (GatedRepoError, LocalTokenNotFoundError) as e:
+            msg = (
+                "Authentication required for CometKiwi model. "
+                "Please:\n"
+                "1. Visit https://huggingface.co/Unbabel/wmt22-cometkiwi-da and accept the license\n"
+                "2. Run: hf auth login\n"
+                "3. Enter your HuggingFace token when prompted"
+            )
+            raise RuntimeError(msg) from e
 
     model = LOADED_METRICS["cometkiwi"]
     gpus = 1 if (torch.cuda.is_available() or torch.backends.mps.is_available()) else 0
