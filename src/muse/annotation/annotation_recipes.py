@@ -221,7 +221,7 @@ def concept_eval_recipe(
         session: Session,
         answers: list[dict],
         update_return_value: float | int | None,
-    ) -> None:
+    ) -> float:
         """
         Returns session-specific progress.
         """
