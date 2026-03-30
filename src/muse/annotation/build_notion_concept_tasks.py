@@ -72,7 +72,6 @@ def main():
         help="One or more machine translation corpora",
     )
     parser.add_argument(
-        "-p",
         "--pairfile",
         type=pathlib.Path,
         required=False,
