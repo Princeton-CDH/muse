@@ -9,14 +9,11 @@ import contextlib
 import io
 import logging
 import os
-from pathlib import Path
 from typing import Any
 
 import evaluate
 import torch
-from comet import load_from_checkpoint
-from huggingface_hub import snapshot_download
-from huggingface_hub.errors import GatedRepoError, LocalTokenNotFoundError
+from comet import download_model, load_from_checkpoint
 
 # Environment variable configuration for PyTorch and HuggingFace libraries
 os.environ["TOKENIZERS_PARALLELISM"] = (
@@ -121,10 +118,9 @@ def compute_cometkiwi(
     # Load model once and cache it
     if LOADED_METRICS["cometkiwi"] is None:
         try:
-            model_path = snapshot_download(repo_id="Unbabel/wmt22-cometkiwi-da")
-            checkpoint_path = Path(model_path) / "checkpoints" / "model.ckpt"
-            LOADED_METRICS["cometkiwi"] = load_from_checkpoint(checkpoint_path)
-        except (GatedRepoError, LocalTokenNotFoundError) as e:
+            model_path = download_model("Unbabel/wmt22-cometkiwi-da")
+            LOADED_METRICS["cometkiwi"] = load_from_checkpoint(model_path)
+        except KeyError as e:
             msg = (
                 "Authentication required for CometKiwi model. "
                 "Please:\n"
