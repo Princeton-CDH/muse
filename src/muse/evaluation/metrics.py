@@ -120,7 +120,7 @@ def compute_cometkiwi(
         try:
             model_path = download_model("Unbabel/wmt22-cometkiwi-da")
             LOADED_METRICS["cometkiwi"] = load_from_checkpoint(model_path)
-        except KeyError as e:
+        except KeyError as e:  # download_model catches all exceptions and re-raises as KeyError
             msg = (
                 "Authentication required for CometKiwi model. "
                 "Please:\n"
