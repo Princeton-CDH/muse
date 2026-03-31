@@ -8,7 +8,6 @@ Example Usage:
 
     build_notion_concept_tasks.py out.jsonl parallel-sents.jsonl --mt-corpus mt_corpus.jsonl
     build_notion_concept_tasks.py out.jsonl parallel-sents.jsonl --mt-corpus mt1.jsonl mt2.jsonl
-    build_notion_concept_tasks.py out.jsonl parallel-sents.jsonl --mt-corpus mt1.jsonl mt2.jsonl
     build_notion_concept_tasks.py out.jsonl parallel-sents.jsonl --mt-corpus mt.jsonl --pairfile pair_ids.txt
 """
 
