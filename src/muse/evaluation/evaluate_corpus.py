@@ -2,8 +2,8 @@
 Generate CSV containing MT metric scores for machine translation corpus.
 
 This script processes a machine translation corpus (JSONL format) and computes
-evaluation metrics (ChrF and COMET) for each translation. The output is a CSV
-file with columns: tr_id, chrf, comet.
+evaluation metrics (ChrF, COMET, and CometKiwi) for each translation. The output
+is a CSV file with columns: tr_id, chrf, comet, cometkiwi.
 
 Usage:
     evaluate_corpus.py INPUT OUTPUT [--verbose]
@@ -18,7 +18,7 @@ import sys
 import orjsonl
 from tqdm import tqdm
 
-from muse.evaluation.metrics import compute_chrf, compute_comet
+from muse.evaluation.metrics import compute_chrf, compute_comet, compute_cometkiwi
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ def evaluate_corpus(
     """
     Compute evaluation metrics for machine translation corpus and save to CSV.
 
-    Reads machine translation records from input JSONL file, computes ChrF and
-    COMET scores for each translation, and writes results to output CSV file
-    with columns: tr_id, chrf, comet.
+    Reads machine translation records from input JSONL file, computes ChrF,
+    COMET, and CometKiwi scores for each translation, and writes results to
+    output CSV file with columns: tr_id, chrf, comet, cometkiwi.
     """
     # Count total records for progress bar
     total_records = sum(1 for _ in orjsonl.stream(input_path))
@@ -41,7 +41,9 @@ def evaluate_corpus(
 
     # Open output CSV file
     with output_path.open("w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=["tr_id", "chrf", "comet"])
+        writer = csv.DictWriter(
+            csvfile, fieldnames=["tr_id", "chrf", "comet", "cometkiwi"]
+        )
         writer.writeheader()
 
         # Process each translation record
@@ -62,6 +64,10 @@ def evaluate_corpus(
                 src_text=record["src_text"],
                 ref_text=record["ref_text"],
             )
+            cometkiwi_score = compute_cometkiwi(
+                tr_text=record["tr_text"],
+                src_text=record["src_text"],
+            )
 
             # Write to CSV
             writer.writerow(
@@ -69,6 +75,7 @@ def evaluate_corpus(
                     "tr_id": record["tr_id"],
                     "chrf": chrf_score,
                     "comet": comet_score,
+                    "cometkiwi": cometkiwi_score,
                 }
             )
 
