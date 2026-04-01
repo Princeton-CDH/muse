@@ -139,6 +139,6 @@ def compute_cometkiwi(
     # Predict returns a Prediction object; access the first score
     model_output = model.predict(data, batch_size=1, gpus=gpus)
     # The Prediction object can be indexed to get individual scores
-    score = model_output[0]
+    score = model_output[0][0]
 
     return score
