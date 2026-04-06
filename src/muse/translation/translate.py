@@ -89,6 +89,7 @@ def hymt_translate(
             start = timer()
         LOADED_MODEL["model_name"] = model_name
         LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
+        # device_map="auto" places the model on GPU if available, CPU otherwise
         LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(
             model_name, device_map="auto"
         )
@@ -169,6 +170,7 @@ def nllb_translate(
     ## Set source language for proper tokenization
     tokenizer.src_lang = nllb_lang_idx[src_lang]
     model_inputs = tokenizer(text, return_tensors="pt")
+    # Move input tensors to the same device as the model
     model_inputs = {k: v.to(model.device) for k, v in model_inputs.items()}
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
