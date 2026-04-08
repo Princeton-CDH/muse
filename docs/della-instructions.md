@@ -5,7 +5,7 @@ For general Della documentation, see the [Princeton Research Computing Della pag
 ## Prerequisites
 
 - A Princeton HPC account with access to Della — request access through the [Research Computing portal](https://researchcomputing.princeton.edu/get-started/request-account)
-- Membership in the `CDHRSE` group to access `/scratch/gpfs/CDHRSE/` — ask a current CDH RSE to add you
+- Membership in the `CDHRSE` group to access `/scratch/gpfs/CDHRSE/` — ask a current CDH RSE to add you <!-- TODO: confirm this is how CDHRSE group access works (@rlskoeser) -->
 - The faculty collaborator's netid to use as the Slurm `--account`
 
 ## Scratch Storage
@@ -18,17 +18,25 @@ CDH RSE files live at `/scratch/gpfs/CDHRSE/<netid>/`. A few things to know abou
 
 ## Setup
 
-### Clone the repo
+### Set up the muse working directory
+
+Clone the repo into your scratch space:
 
 ```bash
 cd /scratch/gpfs/CDHRSE/<netid>
-git clone <repo-url> muse && cd muse
+git clone <repo-url> muse
+```
+
+Create the logs directory that the Slurm script writes to:
+
+```bash
+cd muse
 mkdir -p logs
 ```
 
 ### Create the conda environment
 
-The Slurm script activates a conda environment named `muse`. Create it once on a login node:
+Della's module system does not include `uv`, so we use `conda` as a thin wrapper solely to make `uv` available. The actual Python environment and dependencies are managed by `uv`. Create the environment once on a login node:
 
 ```bash
 module purge
@@ -38,6 +46,8 @@ conda activate muse
 pip install uv
 uv sync
 ```
+
+Note: we tried using a project-specific conda environment with all dependencies managed by conda, but ran into compatibility issues. The current approach — a minimal conda env that installs `uv`, which then manages everything else — is the workaround.
 
 ### Set up the HuggingFace cache
 
@@ -58,12 +68,6 @@ AutoModelForCausalLM.from_pretrained('tencent/HY-MT1.5-1.8B')
 "
 ```
 
-Or copy your local cache from your dev machine (faster if you already have the models):
-
-```bash
-scp -r ~/.cache/huggingface/ <netid>@della.princeton.edu:/scratch/gpfs/CDHRSE/<netid>/huggingface-cache
-```
-
 ## Submitting a Job
 
 The example script is at `examples/slurm/translate-della.slurm`. It accepts three positional arguments:
@@ -79,6 +83,7 @@ sbatch examples/slurm/translate-della.slurm hymt input.jsonl output.jsonl
 ```
 
 Before submitting, update the two placeholder variables at the top of the script:
+
 - `FACULTY_NETID` — the Slurm account (faculty collaborator's netid), used for `--account`
 - `YOUR_NETID` — your Princeton netid, used to construct scratch paths
 
