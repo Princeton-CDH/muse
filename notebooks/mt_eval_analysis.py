@@ -31,20 +31,38 @@ def _():
     import polars as pl
     from scipy import stats
 
-    ROOT = pathlib.Path(__file__).parent.parent
-    return ROOT, alt, pd, pl, stats
+    return alt, pathlib, pd, pl, stats
 
 
 @app.cell
-def _(ROOT, pl):
+def _(mo):
+    mo.md("""
+    ## Configuration
+
+    Set `DATA_DIR` to the phase-1 data directory (e.g. the project drive or TigerData mount).
+    All data files are resolved relative to this path.
+    """)
+    return
+
+
+@app.cell
+def _(pathlib):
+    # Set this to the phase-1 data directory on the project drive / TigerData mount.
+    # Defaults to the local data directory for local development.
+    DATA_DIR = pathlib.Path(__file__).parent.parent / "data" / "Phase 1"
+    return (DATA_DIR,)
+
+
+@app.cell
+def _(DATA_DIR, pl):
     # Load sentence eval CSVs and join with metadata from notion-concept-tasks.jsonl
-    sents_meta = pl.read_ndjson(ROOT / "notion-concept-tasks.jsonl").select(
-        ["tr_id", "model", "src_lang", "tr_lang", "pair_id"]
-    )
+    sents_meta = pl.read_ndjson(
+        DATA_DIR / "prodigy/notion-concept/notion-concept-tasks.jsonl"
+    ).select(["tr_id", "model", "src_lang", "tr_lang", "pair_id"])
 
 
     def load_sents_csv(model: str) -> pl.DataFrame:
-        return pl.read_csv(ROOT / f"eval-sents-{model}.csv").join(
+        return pl.read_csv(DATA_DIR / f"notion-sents/eval-sents-{model}.csv").join(
             sents_meta.filter(pl.col("model") == model), on="tr_id"
         )
 
@@ -62,13 +80,15 @@ def _(ROOT, pl):
 
 
 @app.cell
-def _(ROOT, pl):
-    # Load paragraph eval CSVs and join with metadata from tr-pars-*.jsonl
+def _(DATA_DIR, pl):
+    # Load paragraph eval CSVs and join with metadata from mt-pars-*.jsonl
     def load_pars_csv(model: str) -> pl.DataFrame:
-        meta = pl.read_ndjson(ROOT / f"tr-pars-{model}.jsonl").select(
+        meta = pl.read_ndjson(DATA_DIR / f"mto-pars/mt-pars-{model}.jsonl").select(
             ["tr_id", "model", "src_lang", "tr_lang", "pair_id"]
         )
-        return pl.read_csv(ROOT / f"eval-pars-{model}.csv").join(meta, on="tr_id")
+        return pl.read_csv(DATA_DIR / f"mto-pars/eval-pars-{model}.csv").join(
+            meta, on="tr_id"
+        )
 
 
     pars_df = pl.concat(
@@ -461,10 +481,12 @@ def _(alt, mo, pars_df, pd, pl, sents_df):
 
 
 @app.cell
-def _(ROOT, pars_df, pl, sents_df):
+def _(DATA_DIR, pars_df, pl, sents_df):
     # Load full text corpora and join with scores for qualitative browser
     _sents_full = (
-        pl.read_ndjson(ROOT / "notion-concept-tasks.jsonl")
+        pl.read_ndjson(
+            DATA_DIR / "prodigy/notion-concept/notion-concept-tasks.jsonl"
+        )
         .rename({"text": "tr_text"})
         .select(
             [
@@ -483,7 +505,7 @@ def _(ROOT, pars_df, pl, sents_df):
     )
     _pars_full = pl.concat(
         [
-            pl.read_ndjson(ROOT / f"tr-pars-{m}.jsonl").select(
+            pl.read_ndjson(DATA_DIR / f"mto-pars/mt-pars-{m}.jsonl").select(
                 [
                     "tr_id",
                     "pair_id",
