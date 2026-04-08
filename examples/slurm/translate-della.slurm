@@ -42,4 +42,4 @@ export HF_HUB_OFFLINE=1
 # ---------------------------------------------------------------------------
 cd ${REPO}
 
-uv run src/muse/translation/translate_corpus.py $1 $2 $3 --verbose
+uv run src/muse/translation/translate_corpus.py $1 $2 $3
