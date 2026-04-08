@@ -230,7 +230,9 @@ def madlad_translate(
     model = LOADED_MODEL["model"]
 
     # Generate model input
-    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt").to(model.device)
+    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt").to(
+        model.device
+    )
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
