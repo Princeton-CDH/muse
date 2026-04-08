@@ -5,7 +5,7 @@ For general Della documentation, see the [Princeton Research Computing Della pag
 ## Prerequisites
 
 - A Princeton HPC account with access to Della — request access through the [Research Computing portal](https://researchcomputing.princeton.edu/get-started/request-account)
-- Membership in the `CDHRSE` group to access `/scratch/gpfs/CDHRSE/` — ask a current CDH RSE to add you <!-- TODO: confirm this is how CDHRSE group access works (@rlskoeser) -->
+- Membership in the `CDHRSE` group to access `/scratch/gpfs/CDHRSE/`
 - The faculty collaborator's netid to use as the Slurm `--account`
 
 ## Scratch Storage
