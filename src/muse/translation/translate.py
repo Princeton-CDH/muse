@@ -89,7 +89,10 @@ def hymt_translate(
             start = timer()
         LOADED_MODEL["model_name"] = model_name
         LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
-        LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(model_name)
+        # device_map="auto" places the model on GPU if available, CPU otherwise
+        LOADED_MODEL["model"] = AutoModelForCausalLM.from_pretrained(
+            model_name, device_map="auto"
+        )
         if verbose:
             print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
     tokenizer = LOADED_MODEL["tokenizer"]
@@ -155,7 +158,9 @@ def nllb_translate(
             start = timer()
         LOADED_MODEL["model_name"] = model_name
         LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
-        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(
+            model_name, device_map="auto"
+        )
         if verbose:
             print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
     tokenizer = LOADED_MODEL["tokenizer"]
@@ -164,7 +169,7 @@ def nllb_translate(
     # Generate model input
     ## Set source language for proper tokenization
     tokenizer.src_lang = nllb_lang_idx[src_lang]
-    model_inputs = tokenizer(text, return_tensors="pt")
+    model_inputs = tokenizer(text, return_tensors="pt").to(model.device)
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
@@ -216,14 +221,18 @@ def madlad_translate(
             start = timer()
         LOADED_MODEL["model_name"] = model_name
         LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
-        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        LOADED_MODEL["model"] = AutoModelForSeq2SeqLM.from_pretrained(
+            model_name, device_map="auto"
+        )
         if verbose:
             print(f"Loaded tokenizer & model in {timer() - start:.0f} seconds")
     tokenizer = LOADED_MODEL["tokenizer"]
     model = LOADED_MODEL["model"]
 
     # Generate model input
-    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt")
+    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt").to(
+        model.device
+    )
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
@@ -272,7 +281,7 @@ def gemma_translate(
             LOADED_MODEL["model_name"] = model_name
             LOADED_MODEL["tokenizer"] = AutoTokenizer.from_pretrained(model_name)
             LOADED_MODEL["model"] = AutoModelForImageTextToText.from_pretrained(
-                model_name
+                model_name, device_map="auto"
             )
         except Exception as e:
             # Check if error is related to authentication
