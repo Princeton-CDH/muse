@@ -30,6 +30,7 @@ conda activate muse                 # Activate the muse conda environment
 
 # Point HuggingFace to the shared offline cache — compute nodes have no internet
 export HF_HOME=/scratch/gpfs/CDHRSE/${NETID}/huggingface-cache
+export HF_HUB_CACHE=/scratch/gpfs/CDHRSE/${NETID}/huggingface-cache/hub
 export HF_HUB_OFFLINE=1
 
 # ---------------------------------------------------------------------------
