@@ -28,7 +28,7 @@ mkdir -p logs
 
 ### Create the conda environment
 
-The Slurm scripts activate a conda environment named `muse`. Create it once on a login node:
+The Slurm script activates a conda environment named `muse`. Create it once on a login node:
 
 ```bash
 module purge
@@ -66,25 +66,40 @@ scp -r ~/.cache/huggingface/ <netid>@della.princeton.edu:/scratch/gpfs/CDHRSE/<n
 
 ## Submitting a Job
 
-Both scripts accept three positional arguments: `<model> <input> <output>`.
-
-### CPU
-
-CPU jobs are simpler to configure — memory is allocated per CPU with `--mem-per-cpu`.
+The example script is at `examples/slurm/translate-della.slurm`. It accepts three positional arguments:
 
 ```bash
-sbatch examples/slurm/translate-della-cpu.slurm hymt input.jsonl output.jsonl
+sbatch examples/slurm/translate-della.slurm <model> <input> <output>
 ```
 
-### GPU
-
-GPU jobs run ~14x faster than CPU for the 1.8B–4B models. GPU jobs on Della do **not** use `--mem-per-cpu` — memory allocation is pre-defined per GPU by the partition. The default partition (`mig`) provides a MIG slice of an A100; if you need a full A100, specify `--partition=gpu`.
+For example:
 
 ```bash
-sbatch examples/slurm/translate-della-gpu.slurm hymt input.jsonl output.jsonl
+sbatch examples/slurm/translate-della.slurm hymt input.jsonl output.jsonl
 ```
 
-All HuggingFace models are loaded with `device_map="auto"`, so they use the GPU automatically when `--gres=gpu:1` is present in the Slurm script.
+Before submitting, update the two placeholder variables at the top of the script:
+- `FACULTY_NETID` — the Slurm account (faculty collaborator's netid), used for `--account`
+- `YOUR_NETID` — your Princeton netid, used to construct scratch paths
+
+### Script configuration
+
+The script is configured for a **CPU job** by default:
+
+- `--cpus-per-task=1` — single CPU; the translation models are not parallelised across CPUs
+- `--mem-per-cpu=10G` — 10G is sufficient for the 1.8B–4B parameter models
+- `--time=00:15:00` — 15-minute wall time limit; increase this for large corpora
+
+### Running on GPU
+
+GPU jobs run ~14x faster than CPU for the 1.8B–4B models. To switch to GPU:
+
+1. Uncomment `##SBATCH --gres=gpu:1` in the script
+2. Remove or comment out `--mem-per-cpu` — GPU memory allocation is pre-defined by the partition and cannot be set manually
+
+By default, `--gres=gpu:1` allocates a MIG slice of an A100 (the `mig` partition). If you need a full A100, also add `--partition=gpu`.
+
+All HuggingFace models are loaded with `device_map="auto"`, so they use the GPU automatically when a GPU is allocated — no code changes needed.
 
 ## Logs
 

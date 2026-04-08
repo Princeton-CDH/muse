@@ -1,7 +1,7 @@
 #!/bin/bash
-# MuSE translation job — GPU (Della)
+# MuSE translation job (Della)
 #
-# Usage: sbatch translate-della-gpu.slurm <model> <input> <output>
+# Usage: sbatch translate-della.slurm <model> <input> <output>
 #   model   — model identifier: hymt | madlad | nllb | gemma
 #   input   — path to input JSONL file
 #   output  — path to write translation output JSONL
@@ -10,12 +10,15 @@
 #   FACULTY_NETID  — Slurm account (faculty collaborator's netid)
 #   YOUR_NETID     — your Princeton netid
 #
+# To run on GPU, uncomment the ##SBATCH lines below and remove --mem-per-cpu.
+#
 #SBATCH --job-name=muse-translate
 #SBATCH --account=FACULTY_NETID
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
+#SBATCH --mem-per-cpu=10G               # CPU only — remove this line for GPU jobs
+##SBATCH --gres=gpu:1                   # GPU only — uncomment to request a GPU
 #SBATCH --time=00:15:00                 # Wall time limit — increase for large corpora
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
