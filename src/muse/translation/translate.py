@@ -169,9 +169,7 @@ def nllb_translate(
     # Generate model input
     ## Set source language for proper tokenization
     tokenizer.src_lang = nllb_lang_idx[src_lang]
-    model_inputs = tokenizer(text, return_tensors="pt")
-    # Move input tensors to the same device as the model
-    model_inputs = {k: v.to(model.device) for k, v in model_inputs.items()}
+    model_inputs = tokenizer(text, return_tensors="pt").to(model.device)
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
@@ -232,8 +230,7 @@ def madlad_translate(
     model = LOADED_MODEL["model"]
 
     # Generate model input
-    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt")
-    model_inputs = {k: v.to(model.device) for k, v in model_inputs.items()}
+    model_inputs = tokenizer(f"<2{tgt_lang}> {text}", return_tensors="pt").to(model.device)
     input_len = model_inputs["input_ids"][0].size()[0]
     if verbose:
         print(f"Input length: {input_len} tokens")
