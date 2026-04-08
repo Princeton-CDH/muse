@@ -1,6 +1,6 @@
-# Running MuSE Translation Jobs on Della (CPU)
+# Running MuSE Jobs on Della
 
-For general Della setup and CPU job guidance, see the [Della documentation](https://researchcomputing.princeton.edu/systems/della).
+For general Della setup, see the [Della documentation](https://researchcomputing.princeton.edu/systems/della).
 
 ## Prerequisites
 
@@ -13,12 +13,14 @@ For general Della setup and CPU job guidance, see the [Della documentation](http
 Clone the repo to scratch and create the logs directory:
 
 ```bash
-cd /scratch/gpfs/CDHRSE/<netid>/muse
+cd /scratch/gpfs/CDHRSE/<netid>
 git clone <repo-url> muse && cd muse
 mkdir -p logs
 ```
 
-## Submitting a Job
+## Translation Jobs
+
+### CPU
 
 Edit `examples/slurm/translate-della-cpu.slurm` and update `YOUR_NETID`, `YOUR_ACCOUNT`, `INPUT`, `OUTPUT`, and `MODEL`, then:
 
@@ -26,13 +28,25 @@ Edit `examples/slurm/translate-della-cpu.slurm` and update `YOUR_NETID`, `YOUR_A
 sbatch examples/slurm/translate-della-cpu.slurm
 ```
 
+### GPU
+
+GPU jobs run ~14x faster than CPU for the 1.8B–4B models. For GPU job guidance, see the [Della GPU documentation](https://researchcomputing.princeton.edu/systems/della#GPU-Jobs).
+
+Edit `examples/slurm/translate-della-gpu.slurm` and update `YOUR_NETID`, `YOUR_ACCOUNT`, `INPUT`, `OUTPUT`, and `MODEL`, then:
+
+```bash
+sbatch examples/slurm/translate-della-gpu.slurm
+```
+
+All HuggingFace models are loaded with `device_map="auto"`, so they use the GPU automatically when `--gres=gpu:1` is present in the Slurm script.
+
 ## Useful Commands
 
 ```bash
 # Check job status
 squeue -u <netid>
 
-# Check CPU efficiency after job completes
+# Check efficiency after job completes
 jobstats <jobid>
 
 # Pull latest code on a login node
