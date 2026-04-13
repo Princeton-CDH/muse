@@ -18,8 +18,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=10G               # CPU only — remove this line for GPU jobs
-##SBATCH --gres=gpu:1                   # GPU only — uncomment to request a GPU
-##SBATCH --partition=mig                # GPU only — default MIG slice; use 'gpu' for a full A100
+##SBATCH --partition=mig                # GPU only — use a MIG GPU
 #SBATCH --time=00:15:00                 # Wall time limit — increase for large corpora
 #SBATCH --output=logs/%x_%j.out        # Logs are written to logs/ relative to the working directory
 #SBATCH --error=logs/%x_%j.err
@@ -43,7 +42,7 @@ export HF_HUB_OFFLINE=1
 # ---------------------------------------------------------------------------
 # Validate arguments
 # ---------------------------------------------------------------------------
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+if [ "$#" -ne 3 ]; then
     echo "Usage: sbatch translate-della.slurm <model> <input> <output>"
     echo "  model   — hymt | madlad | nllb | gemma"
     echo "  input   — path to input JSONL file"
