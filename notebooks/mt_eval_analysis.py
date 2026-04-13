@@ -107,6 +107,28 @@ def _(DATA_DIR, pl):
 def _(mo):
     mo.md("""
     ## 1. Score distributions by model
+
+    Box plots showing the full distribution of each metric score per model, across all translation
+    pairs in each corpus. Each box spans the interquartile range (Q1–Q3); whiskers extend to the
+    min/max.
+
+    **Key finding:**
+
+    Observation 1: chrF distributions are wide for all three models (whiskers spanning roughly
+    0.2–1.0), pulled down at the low end by cross-script directions (CJK ↔ Latin). The median
+    is slightly higher for google_tllm (~0.55–0.58), but the large variance makes it hard to
+    draw firm conclusions from chrF alone.
+
+    Observation 2: COMET distributions are much tighter (~0.6–0.9). google_tllm has the highest
+    median (~0.80–0.82); gemma and hymt are close to each other (~0.77–0.79). On paragraphs the
+    three models converge further and the boxes nearly overlap.
+
+    Observation 3: CometKiwi follows the same pattern as COMET but with an even narrower spread.
+    google_tllm remains the top model; gemma and hymt are nearly indistinguishable.
+
+    Conclusion: google_tllm consistently outperforms the other two models across both corpora and
+    all three metrics. gemma and hymt perform at a similar level. The wide chrF spread is driven
+    by the cross-script artefact (see section 4), not by genuine quality variation.
     """)
     return
 
@@ -147,6 +169,25 @@ def _(alt, mo, pars_df, sents_df):
 def _(mo):
     mo.md("""
     ## 2. Model ranking
+
+    Bar charts showing the mean score per model for each metric, sorted highest to lowest.
+    Aggregated across all translation pairs in each corpus.
+
+    **Key finding:**
+
+    Observation 1: google_tllm ranks first on every metric and both corpora, with a consistent
+    lead. On sentences: chrF ~0.55, COMET ~0.81, CometKiwi ~0.84. On paragraphs the absolute
+    scores are similar but the gap over the other two models narrows slightly.
+
+    Observation 2: gemma and hymt are very close to each other on all metrics — the bars are
+    nearly the same length. Neither consistently beats the other across all metrics and corpora.
+
+    Observation 3: The ranking is stable across metrics (google_tllm > gemma ≈ hymt) even though
+    the absolute scale differs a lot between chrF and the two neural metrics.
+
+    Conclusion: google_tllm is the clear winner. gemma and hymt are statistically hard to
+    separate — the mean score difference between them is smaller than the within-model variance
+    seen in section 1.
     """)
     return
 
@@ -195,7 +236,37 @@ def _(mo):
     mo.md("""
     ## 3. Metric agreement
 
-    Key finding: chrF vs CometKiwi correlation collapses on paragraphs (r ≈ −0.05), suggesting reference translations are paraphrastic rather than literal. Low paragraph COMET/CometKiwi correlation (r ≈ 0.28) means they diverge on longer texts — CometKiwi is arguably more honest since it doesn't penalise paraphrastic output.
+    How well do the three metrics agree with each other at the instance level? Computed using
+    Pearson r (linear correlation) and Spearman ρ (rank correlation) across all translation pairs
+    in each corpus, pooled across models. The scatter matrix plots every metric pair against each
+    other; the correlation tables give exact coefficients and p-values. The COMET vs CometKiwi
+    scatter adds a linear regression line to make the trend visible.
+
+    **Key finding:**
+
+    Observation 1: On sentences, all three metrics show positive correlation with each other
+    (all blue in the heatmap), with chrF vs COMET being the strongest pair. The scatter plots
+    show a positive trend but with considerable spread — the metrics broadly agree on direction
+    but not on exact rankings.
+
+    Observation 2: On paragraphs, the scatter plots split into two visible clusters — one group
+    with low chrF (CJK directions) and one with higher chrF (Latin-script directions). This
+    distorts the chrF correlations. The heatmap shows chrF vs CometKiwi turning near-zero or
+    slightly negative on paragraphs (r ≈ −0.05), and chrF vs COMET also weakens substantially.
+
+    Observation 3: COMET vs CometKiwi correlation is moderate on sentences but drops further on
+    paragraphs (r ≈ 0.28), meaning the two neural metrics diverge on longer texts — they are
+    measuring somewhat different things.
+
+    Analysis: The chrF correlation collapse on paragraphs has two causes: (1) the cross-script
+    artefact described in section 4, and (2) reference translations that are paraphrastic rather
+    than literal — chrF penalises valid paraphrases, while CometKiwi (being reference-free) does
+    not. The COMET/CometKiwi divergence on paragraphs suggests CometKiwi is the more honest
+    signal for longer texts.
+
+    Conclusion: On sentences, the three metrics broadly agree. On paragraphs, chrF becomes
+    unreliable and COMET and CometKiwi should be weighted more heavily — with CometKiwi
+    preferred where reference quality is uncertain.
     """)
     return
 
@@ -353,7 +424,29 @@ def _(mo):
     mo.md("""
     ## 4. Language breakdown
 
-    If only chrF drops for CJK languages, it's a script artefact. If COMET/CometKiwi also drop, it's a real quality signal.
+    Scores broken down by translation direction (e.g. `zh→en`, `en→zh`), derived from the
+    `src_lang` and `tr_lang` fields in the eval CSVs. The box plots show the full score
+    distribution per direction; the grouped bar charts show mean scores per direction × model;
+    the final chart collapses all directions into two groups — into English (`src→en`) vs. out
+    of English (`en→src`) — to test for a systematic directionality bias.
+
+    **Key finding:**
+
+    Observation 1: chrF scores vary dramatically by direction — `ja→en` and `zh→en` score around 0.4 on
+    sentences, while `pt→en` reaches ~0.7. On paragraphs, `en→zh` collapses to near zero
+    (median ~0.08) and `en→ja` is similarly low (~0.25).
+
+    Analysis: This is not caused by quality difference. Because:
+    chrF works by counting shared characters between the translation and the reference, so when
+    the two are in completely different writing systems (e.g. CJK vs. Latin), they share no
+    characters at all and the score is near zero by construction — regardless of translation
+    quality.
+
+    Observation 2: COMET and CometKiwi are unaffected — both stay flat across all directions (~0.75–0.85),
+    with no CJK gap.
+
+    Conclusion: For cross-script directions, chrF is meaningless; COMET and CometKiwi
+    are the only reliable metrics.
     """)
     return
 
@@ -577,7 +670,7 @@ def _(browser_data, mo, pl):
     mo.vstack(
         [
             mo.md(
-                "## 5. Qualitative translation browser\n\nRead src / ref / translation side-by-side with scores. Sort by `kiwi_minus_chrf ↓` to surface cases where CometKiwi rates the translation highly but chrF doesn't — these are the paraphrase cases."
+                "## 5. Qualitative translation browser\n\nRead src / ref / translation side-by-side with scores. Data is joined from the full-text JSONL files (`notion-concept-tasks.jsonl` for sentences, `mt-pars-{model}.jsonl` for paragraphs) with the metric scores from the eval CSVs. The `kiwi_minus_chrf` column is computed as CometKiwi − chrF: a high value means the model produced a fluent translation that diverges from the reference wording. Sort by `kiwi_minus_chrf ↓` to surface the clearest paraphrase cases; sort by `cometkiwi ↓` or `comet ↓` to find the worst translations."
             ),
             mo.hstack(
                 [corpus_sel, model_sel, dir_sel, term_sel, sort_sel, n_sel],
