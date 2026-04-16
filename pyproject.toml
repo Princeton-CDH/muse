@@ -63,7 +63,7 @@ target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
 # Ignore notebooks — marimo notebooks are not linted
-extend-exclude = [ "notebooks/mt_eval_analysis.py" ]
+extend-exclude = [ "notebooks/" ]
 
 [tool.ruff.lint]
 # Include these rules in addition to ruff's defaults
