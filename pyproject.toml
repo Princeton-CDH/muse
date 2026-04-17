@@ -36,12 +36,6 @@ dependencies = [
   "datasets",
   "sacrebleu",
   "unbabel-comet",
-  "altair>=5",
-  "pandas",
-  "scipy",
-  "nbformat>=5.10.4",
-  "nbconvert>=7.17.0",
-  "playwright>=1.58.0",
 ]
 
 [project.optional-dependencies]
