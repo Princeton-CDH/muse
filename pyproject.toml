@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "pip", # required for downloading spaCy model in uv-created virtualenvs
-  "marimo>=0.13.11",
+  "marimo>=0.22.0",
   "polars>=0.20.4",
   "numpy",
   "ipython", # Required by transformers for trainer functionality
@@ -56,6 +56,8 @@ path = "src/muse/__init__.py"
 target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
+# Ignore notebooks — marimo notebooks are not linted
+extend-exclude = [ "notebooks/*.py" ]
 
 [tool.ruff.lint]
 # Include these rules in addition to ruff's defaults
