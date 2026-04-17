@@ -55,11 +55,10 @@ def _(pathlib):
 def _(DATA_DIR, pl):
     # Load full sentence translations and join with eval scores.
     # Uses the complete notion-sents corpus (all Notion concepts), not the annotation subset.
-    # Note: madlad does not have eval scores.
     _sents_meta = pl.concat(
         [
             pl.read_ndjson(DATA_DIR / f"notion-sents/mt-sents-{m}.jsonl")
-            for m in ["google_tllm", "hymt", "gemma", "madlad"]
+            for m in ["google_tllm", "hymt", "gemma"]
         ]
     )
     _sents_scores = pl.concat(
@@ -101,7 +100,9 @@ def _(DATA_DIR, pl):
 
 @app.cell
 def _(mo):
-    mo.md("## 1. Sentence translations")
+    mo.md("""
+    ## 1. Sentence translations
+    """)
     return
 
 
@@ -110,11 +111,14 @@ def _(pl, sents_df):
     sents_df.filter(pl.col("src_lang") != "en").select(
         ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
     )
+    return
 
 
 @app.cell
 def _(mo):
-    mo.md("## 2. Sentence backtranslations")
+    mo.md("""
+    ## 2. Sentence backtranslations
+    """)
     return
 
 
@@ -123,11 +127,14 @@ def _(pl, sents_df):
     sents_df.filter(pl.col("src_lang") == "en").select(
         ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
     )
+    return
 
 
 @app.cell
 def _(mo):
-    mo.md("## 3. Paragraph translations")
+    mo.md("""
+    ## 3. Paragraph translations
+    """)
     return
 
 
@@ -136,11 +143,14 @@ def _(pars_df, pl):
     pars_df.filter(pl.col("src_lang") != "en").select(
         ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
     )
+    return
 
 
 @app.cell
 def _(mo):
-    mo.md("## 4. Paragraph backtranslations")
+    mo.md("""
+    ## 4. Paragraph backtranslations
+    """)
     return
 
 
@@ -149,6 +159,7 @@ def _(pars_df, pl):
     pars_df.filter(pl.col("src_lang") == "en").select(
         ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
     )
+    return
 
 
 if __name__ == "__main__":
