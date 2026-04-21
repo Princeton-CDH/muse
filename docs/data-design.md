@@ -57,7 +57,7 @@ At this time there are no optional fields for a machine translation corpus.
 | Field Name | Type | Description |
 | --- | --- | --- |
 | tr_id | str | Unique identifier (UUID) for the machine translation |
-| pair_id | str | Parallel text record ID |
+| pair_id | int | Parallel text record ID |
 | model | str | Model used for translation |
 | src_lang | str | Language of the source text (ISO 639-1 language code) |
 | tr_lang | str | Language of the translation (ISO 639-1 language code) |
@@ -81,6 +81,6 @@ To evaluate the machine translations generated during Phase 1, machine translati
 | Field Name | Type | Description |
 | --- | --- | --- |
 | tr_id | str | Machine translation record ID |
-| chrf | str | ChrF score for the translation |
-| comet | str | COMET score for the translation |
-| comet-kiwi | str | CometKiwi score for the translation |
+| chrf | float | ChrF score for the translation |
+| comet | float | COMET score for the translation |
+| comet-kiwi | float | CometKiwi score for the translation |
