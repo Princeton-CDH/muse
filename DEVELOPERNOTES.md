@@ -37,19 +37,26 @@ gcloud auth application-default set-quote-project [project id]
 
 Alternatively, a different credential file may be selected by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable. See the [Google ADC guide](https://docs.cloud.google.com/docs/authentication/application-default-credentials) for more information.
 
-## TranslateGemma Setup
+## HuggingFace CLI
 
-The MuSE project supports Google's TranslateGemma model for machine translation. This requires HuggingFace authentication and license acceptance.
+The MuSE project supports Google's TranslateGemma model for machine translation and uses Unbabel's Comet-Kiwi model for evaluation.
+Both of these are [gated models](https://huggingface.co/docs/hub/models-gated) which will require HuggingFace authentication and license acceptance.
 
 ### Installing HuggingFace CLI
 
-Install the HuggingFace CLI using pip:
+See the [HuggingFace CLI guide](https://huggingface.co/docs/huggingface_hub/en/guides/cli) for further information on installing and using the CLI.
+
+We can install `hf` using Homebrew or by installing the `hugginface-hub` with pip:
 
 ```bash
+brew install hf
+```
+
+```
 pip install huggingface-hub
 ```
 
-Verify installation:
+We can verify that `hf` has been installed by running:
 
 ```bash
 hf --version
@@ -76,9 +83,32 @@ hf auth login
 The token is stored in the following location:
 `~/.cache/huggingface/token`
 
-#### Accepting Model License
+#### Accepting Model Licenses
 
-For gated models like TranslateGemma, you must accept the license:
+For gated models like TranslateGemma, you must accept the license. To do this:
 
-1. Visit the model page: [https://huggingface.co/google/translategemma-4b-it](https://huggingface.co/google/translategemma-4b-it)
+1. Visit the model page (e.g., [https://huggingface.co/google/translategemma-4b-it](https://huggingface.co/google/translategemma-4b-it))
 2. Click "Acknowledge license" to accept the license terms
+
+## License Notice in File Headers
+
+A copyright notice has been applied to the header of all files with
+[copywrite](https://github.com/hashicorp/copywrite) with the project configuration in `.copywrite.hcl`.
+
+To install with brew:
+
+```sh
+brew tap hashicorp/tap
+brew install hashicorp/tap/copywrite
+```
+
+Once installed, you can apply the copyright notice to all files without this notice by running `copywrite headers` (note that it does not update existing files even if the configuration has changed).
+
+### Notebooks
+
+For notebooks, copyright information should be added manually.
+The following markdown block was added to existing notebooks as the final cell.
+
+```
+(c)2026 Trustees of Princeton University. Permission granted for non-commercial distribution online under the [Apache 2.0 License](https://github.com/Princeton-CDH/corppa/blob/feature/license-headers/LICENSE).
+```

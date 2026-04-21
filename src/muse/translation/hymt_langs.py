@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Data types for HY-MT 1.5's supported languages. See the model's github repo
 for more details: https://github.com/Tencent-Hunyuan/HY-MT

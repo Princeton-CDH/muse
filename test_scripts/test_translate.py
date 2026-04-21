@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Quick test script tests the translate() function.
 Models will download automatically on first run - may take a few minutes.
@@ -9,59 +12,65 @@ import json
 import sys
 from pathlib import Path
 
-# Add src to path for direct script execution
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-
 from muse.translation.translate import translate
 
-# Load test cases from file
-test_cases_file = Path(__file__).parent / "test_cases.jsonl"
-test_cases = []
 
-with test_cases_file.open(encoding="utf-8") as f:
-    for line in f:
-        record = json.loads(line)
-        test_cases.append(
-            {
-                "id": record["id"],
-                "lang": record["lang"],
-                "text": record["text"],
-                "en_tr": record["en_tr"],
-            }
-        )
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: test_translate.py <input.jsonl>")
+        sys.exit(1)
+    # Load test cases from file
+    test_cases_file = Path(sys.argv[1])
+    test_cases = []
 
-print(f"Loaded {len(test_cases)} test cases from {test_cases_file.name}")
+    with test_cases_file.open(encoding="utf-8") as f:
+        for line in f:
+            record = json.loads(line)
+            test_cases.append(
+                {
+                    "id": record["id"],
+                    "lang": record["lang"],
+                    "text": record["text"],
+                    "en_tr": record["en_tr"],
+                }
+            )
 
-# Models to test
-models = [
-    "facebook/nllb-200-3.3B",
-    "tencent/HY-MT1.5-7B",
-    "google/madlad400-7b-mt",
-]
+    print(f"Loaded {len(test_cases)} test cases from {test_cases_file.name}")
 
-for model in models:
-    print(f"\n{'=' * 80}")
-    print(f"Testing model: {model}")
-    print(f"{'=' * 80}\n")
+    # Models to test
+    models = [
+        "nllb",
+        "hymt",
+        "madlad",
+    ]
 
-    for tc in test_cases:
-        src_lang = tc["lang"]
-        text = tc["text"]
-        reference = tc["en_tr"]
+    for model in models:
+        print(f"\n{'=' * 80}")
+        print(f"Testing model: {model}")
+        print(f"{'=' * 80}\n")
 
-        # Translate
-        result = translate(
-            model=model,
-            src_lang=src_lang,
-            tgt_lang="en",
-            text=text,
-            verbose=True,
-        )
+        for tc in test_cases:
+            src_lang = tc["lang"]
+            text = tc["text"]
+            reference = tc["en_tr"]
 
-        # Display results
-        print(f"Model: {model}")
-        print(f"[ID {tc['id']}] {src_lang}→en")
-        print(f"Original:    {text}")
-        print(f"Translation: {result}")
-        print(f"Reference:   {reference}")
-        print()
+            # Translate
+            result = translate(
+                model=model,
+                src_lang=src_lang,
+                tgt_lang="en",
+                text=text,
+                verbose=True,
+            )
+
+            # Display results
+            print(f"Model: {model}")
+            print(f"[ID {tc['id']}] {src_lang}→en")
+            print(f"Original:    {text}")
+            print(f"Translation: {result}")
+            print(f"Reference:   {reference}")
+            print()
+
+
+if __name__ == "__main__":
+    main()

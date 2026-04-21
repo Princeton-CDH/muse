@@ -22,19 +22,15 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-  "pip", # required for downloading spaCy model in uv-created virtualenvs
-  "marimo>=0.22.0",
-  "polars>=0.20.4",
-  "numpy",
-  "ipython", # Required by transformers for trainer functionality
-  "transformers[torch, sentencepiece, tiktoken]",
-  "google-cloud-translate",
-  "google-auth",
-  "orjsonl",
-  "ftfy",
   "evaluate",
-  "datasets",
-  "sacrebleu",
+  "ftfy",
+  "google-auth",
+  "google-cloud-translate",
+  "marimo",
+  "orjsonl",
+  "polars",
+  "tqdm",
+  "transformers[torch, sentencepiece, tiktoken]",
   "unbabel-comet",
 ]
 

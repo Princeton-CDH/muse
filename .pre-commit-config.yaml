@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 # This configuration file specifies which hooks to run, the versions of each tool, arguments to pass, and which file types to include or exclude.
 # It ensures that code is linted and formatted automatically on every commit.
 # To set up, run 'pre-commit install'. You can also run all hooks manually with 'pre-commit run --all-files'.
