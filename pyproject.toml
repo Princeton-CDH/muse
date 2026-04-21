@@ -1,0 +1,99 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "muse"
+description = "Code for evaluating machine translation and multilingual embeddings associated with the CDH project MuSE"
+authors = [
+  {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "Apache-2"}
+dynamic = ["version"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Text Processing",
+]
+dependencies = [
+  "evaluate",
+  "ftfy",
+  "google-auth",
+  "google-cloud-translate",
+  "marimo",
+  "orjsonl",
+  "polars",
+  "tqdm",
+  "transformers[torch, sentencepiece, tiktoken]",
+  "unbabel-comet",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "ruff",
+  "marimo[lsp]", # marimo language server protocol
+]
+
+[dependency-groups]
+dev = [ "muse[dev]" ]
+
+[tool.hatch.version]
+path = "src/muse/__init__.py"
+
+[tool.ruff]
+# Always generate Python 3.12-compatible code
+target-version = "py312"
+# Configure src path so ruff import fixes can identify local imports
+src = [ "src" ]
+# Ignore notebooks — marimo notebooks are not linted
+extend-exclude = [ "notebooks/*.py" ]
+
+[tool.ruff.lint]
+# Include these rules in addition to ruff's defaults
+extend-select = [
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "I",    #isort
+  "NPY",  # numpy-specific rules
+  "PERF", # perflint
+  "PTH",  # flake8-use-pathlib
+  "RUF",  # ruff-specific rules
+  "SIM",  # flake8-simplify
+  "UP",   # pyupgrade
+]
+# Can use to ignore specific rules within above selection
+ignore = []
+
+[tool.marimo.display]
+cell_output = "below"
+theme = "system"      # honor user preference, including in static html exports
+
+[tool.marimo.runtime]
+# Add project source directory to python path
+pythonpath = [ "src" ]
+
+[tool.marimo.save]
+format_on_save = true
+
+[tool.marimo.diagnostics]
+enabled = true
+
+[tool.marimo.experimental]
+lsp = true
+
+[tool.hatch.metadata]
+# So python type stubs can be installed from GitHub (i.e., direct reference)
+allow-direct-references = true
+
+[tool.uv]
+required-version = ">=0.8.6"
+
+[tool.mdformat]
+number = true
