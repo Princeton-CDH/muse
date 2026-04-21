@@ -43,3 +43,10 @@ Below is a list of additional materials created during this phase:
 - `docs/della-guide.md`: guide for running MuSE translations jobs on Della
 - `examples/slurm/translate-della.slurm`: example slurm script for running machine translation jobs on Della
 - `test_scripts`: test scripts created during development
+
+## License
+
+This project is licensed under the [Apache 2.0 License](LICENSE).
+
+(c)2025-2026 Trustees of Princeton University. Permission granted for non-commercial
+distribution online under a standard Open Source license.
