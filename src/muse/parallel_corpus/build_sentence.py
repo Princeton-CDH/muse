@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Build a parallel sentence corpus (JSONL) from MuSE music-theoretical concept data
 from Notion. Each parallel sentence will be a language pair of the source language

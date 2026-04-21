@@ -1,6 +1,9 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 import marimo
 
-__generated_with = "0.22.0"
+__generated_with = "0.23.1"
 app = marimo.App(width="medium")
 
 
@@ -37,17 +40,17 @@ def _(mo):
     mo.md("""
     ## Configuration
 
-    Set `DATA_DIR` to the phase-1 data directory (e.g. the project drive or TigerData mount).
-    All data files are resolved relative to this path.
+    This notebook uses the phase-1 data directory as it is organized on TigerData.
     """)
     return
 
 
 @app.cell
 def _(pathlib):
-    # Set this to the phase-1 data directory on the project drive / TigerData mount.
-    # Defaults to the local data directory for local development.
-    DATA_DIR = pathlib.Path(__file__).parent.parent / "data" / "Phase 1"
+    # Set this to your local copy of the project's TigerData directory
+    tigerdata_filepath = "../data/tigerdata"
+    # Set to phase-1 directory
+    DATA_DIR = pathlib.Path(tigerdata_filepath) / "phase-1"
     return (DATA_DIR,)
 
 
@@ -67,7 +70,9 @@ def _(DATA_DIR, pl):
             for m in ["google_tllm", "hymt", "gemma"]
         ]
     )
-    sents_df = _sents_meta.join(_sents_scores, on="tr_id", how="left").with_columns(
+    sents_df = _sents_meta.join(
+        _sents_scores, on="tr_id", how="left"
+    ).with_columns(
         pl.col("chrf").round(3),
         pl.col("comet").round(3),
         pl.col("cometkiwi").round(3),
@@ -109,7 +114,18 @@ def _(mo):
 @app.cell
 def _(pl, sents_df):
     sents_df.filter(pl.col("src_lang") != "en").select(
-        ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
+        [
+            "pair_id",
+            "model",
+            "src_lang",
+            "tr_lang",
+            "chrf",
+            "comet",
+            "cometkiwi",
+            "src_text",
+            "ref_text",
+            "tr_text",
+        ]
     )
     return
 
@@ -125,7 +141,18 @@ def _(mo):
 @app.cell
 def _(pl, sents_df):
     sents_df.filter(pl.col("src_lang") == "en").select(
-        ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
+        [
+            "pair_id",
+            "model",
+            "src_lang",
+            "tr_lang",
+            "chrf",
+            "comet",
+            "cometkiwi",
+            "src_text",
+            "ref_text",
+            "tr_text",
+        ]
     )
     return
 
@@ -141,7 +168,18 @@ def _(mo):
 @app.cell
 def _(pars_df, pl):
     pars_df.filter(pl.col("src_lang") != "en").select(
-        ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
+        [
+            "pair_id",
+            "model",
+            "src_lang",
+            "tr_lang",
+            "chrf",
+            "comet",
+            "cometkiwi",
+            "src_text",
+            "ref_text",
+            "tr_text",
+        ]
     )
     return
 
@@ -157,8 +195,27 @@ def _(mo):
 @app.cell
 def _(pars_df, pl):
     pars_df.filter(pl.col("src_lang") == "en").select(
-        ["pair_id", "model", "src_lang", "tr_lang", "chrf", "comet", "cometkiwi", "src_text", "ref_text", "tr_text"]
+        [
+            "pair_id",
+            "model",
+            "src_lang",
+            "tr_lang",
+            "chrf",
+            "comet",
+            "cometkiwi",
+            "src_text",
+            "ref_text",
+            "tr_text",
+        ]
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    (c)2026 Trustees of Princeton University. Permission granted for non-commercial distribution online under the [Apache 2.0 License](https://github.com/Princeton-CDH/muse/blob/main/LICENSE).
+    """)
     return
 
 

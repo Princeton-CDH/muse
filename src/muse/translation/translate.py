@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Library for performing machine translation (MT) for a given language for various
 MT models. All supported models are can translate Chinese, Japanese, and Spanish

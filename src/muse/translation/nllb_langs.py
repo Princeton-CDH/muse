@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Data type for NLLB-200's supported languages. See the model's github repo
 for more details: https://github.com/facebookresearch/fairseq/blob/nllb/README.md

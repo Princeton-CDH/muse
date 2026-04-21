@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Quick test script tests the translate() function.
 Models will download automatically on first run - may take a few minutes.

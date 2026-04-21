@@ -1,3 +1,6 @@
+# Copyright Center for Digital Humanities, Princeton University 2025, 2026
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Build a parallel paragraph corpus (JSONL) from side-by-side translation data (CSVs).
 These CSVs are assumed to be within a single directory and have names corresponding

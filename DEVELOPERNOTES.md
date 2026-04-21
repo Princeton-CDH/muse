@@ -89,3 +89,26 @@ For gated models like TranslateGemma, you must accept the license. To do this:
 
 1. Visit the model page (e.g., [https://huggingface.co/google/translategemma-4b-it](https://huggingface.co/google/translategemma-4b-it))
 2. Click "Acknowledge license" to accept the license terms
+
+## License Notice in File Headers
+
+A copyright notice has been applied to the header of all files with
+[copywrite](https://github.com/hashicorp/copywrite) with the project configuration in `.copywrite.hcl`.
+
+To install with brew:
+
+```sh
+brew tap hashicorp/tap
+brew install hashicorp/tap/copywrite
+```
+
+Once installed, you can apply the copyright notice to all files without this notice by running `copywrite headers` (note that it does not update existing files even if the configuration has changed).
+
+### Notebooks
+
+For notebooks, copyright information should be added manually.
+The following markdown block was added to existing notebooks as the final cell.
+
+```
+(c)2026 Trustees of Princeton University. Permission granted for non-commercial distribution online under the [Apache 2.0 License](https://github.com/Princeton-CDH/corppa/blob/feature/license-headers/LICENSE).
+```
