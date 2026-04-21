@@ -2,7 +2,7 @@
 
 This repository contains in-progress experimental research software for the CDH project [MuSE (Multilingual Semantic Embeddings)](https://cdh.princeton.edu/projects/muse/).
 
-For developer setup instructions, including Google Cloud Translation configuration, see [DEVELOPERNOTES.md](docs/DEVELOPERNOTES.md).
+For developer setup instructions, including Google Cloud Translation and HuggingFace Authentication configuration, see [DEVELOPERNOTES.md](DEVELOPERNOTES.md).
 
 ## Phase 1
 
@@ -16,7 +16,7 @@ We evaluate three models: a commercial state-of-the-art model and two open-weigh
 
 2. **HY-MT1.5**. Tencent's Hunyuan Translation Model Version 1.5. We use the [1.8B parameter model](https://huggingface.co/tencent/HY-MT1.5-1.8B).
 
-3. **TranslateGemma**. Google's [TranslateGemma](https://blog.google/innovation-and-ai/technology/developers-tools/translategemma/) translation model that supports over 400 languages. We use the [4B parameter model](https://huggingface.co/google/translategemma-4b-it). _Note: This is a gated model which will require authentication via HuggingFace. See [DEVELOPERNOTES.md](docs/DEVELOPERNOTES.md) for more details._
+3. **TranslateGemma**. Google's [TranslateGemma](https://blog.google/innovation-and-ai/technology/developers-tools/translategemma/) translation model that supports over 400 languages. We use the [4B parameter model](https://huggingface.co/google/translategemma-4b-it). _Note: This is a gated model which will require authentication via HuggingFace. See [DEVELOPERNOTES.md](DEVELOPERNOTES.md) for more details._
 
 During this phase, we also experimented with two additional open-weights models available on 🤗 Hugging Face. While we ultimately chose not to include them in our evaluation, our translation module supports them.
 
