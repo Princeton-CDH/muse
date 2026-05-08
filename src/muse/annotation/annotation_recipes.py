@@ -115,12 +115,11 @@ def lang_task_router(ctrl: Controller, session_id: str, item: dict) -> list[str]
 
 
 def session_factory(ctrl: Controller, session_id: str) -> Session:
-    if ctrl.db and isinstance(ctrl.dataset, str) and session_id in ctrl.db:
-        session_hashes = set()
-        total_annotated = 0
-        if session_id in ctrl.db:
-            session_hashes = ctrl.db.get_hashes(session_id, kind=ctrl.exclude_by)
-            total_annotated = ctrl.db.count_dataset(session_id, session=True)
+    session_hashes = set()
+    total_annotated = 0
+    if session_id in ctrl.db:
+        session_hashes = ctrl.db.get_hashes(session_id, kind=ctrl.exclude_by)
+        total_annotated = ctrl.db.count_dataset(session_id, session=True)
 
     ctrl.stream.ensure_queue(session_id)
     session = Session(
