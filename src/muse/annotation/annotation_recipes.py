@@ -115,6 +115,12 @@ def lang_task_router(ctrl: Controller, session_id: str, item: dict) -> list[str]
 
 
 def session_factory(ctrl: Controller, session_id: str) -> Session:
+    """
+    Custom session factory that loads each annotator's past hashes from the
+    database on session start. This prevents annotators from being served
+    examples they've already answered when auto_exclude_current is set to False
+    to disable cross-session filtering.
+    """
     session_hashes = set()
     total_annotated = 0
     if session_id in ctrl.db:
