@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.1
+
+- Update `concept-eval` recipe to fix cross-session filtering error
+
 ## 0.1.0
 
 - Phase 1 release

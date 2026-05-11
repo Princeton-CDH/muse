@@ -114,6 +114,33 @@ def lang_task_router(ctrl: Controller, session_id: str, item: dict) -> list[str]
     return annotators
 
 
+def session_factory(ctrl: Controller, session_id: str) -> Session:
+    """
+    Custom session factory that loads each annotator's past hashes from the
+    database on session start. This prevents annotators from being served
+    examples they've already answered when auto_exclude_current is set to False
+    to disable cross-session filtering.
+    """
+    session_hashes = set()
+    total_annotated = 0
+    if session_id in ctrl.db:
+        session_hashes = ctrl.db.get_hashes(session_id, kind=ctrl.exclude_by)
+        total_annotated = ctrl.db.count_dataset(session_id, session=True)
+
+    ctrl.stream.ensure_queue(session_id)
+    session = Session(
+        session_id,
+        ctrl.stream,
+        batch_size=ctrl.batch_size,
+        answered_input_hashes=session_hashes if ctrl.exclude_by == "input" else None,
+        answered_task_hashes=session_hashes if ctrl.exclude_by == "task" else None,
+        total_annotated=total_annotated,
+        target_annotated=ctrl.target_annotated or 0,
+    )
+    ctrl.add_session(session)
+    return session
+
+
 @recipe(
     "concept-eval",
     dataset=Arg(help="Dataset to save answers to"),
@@ -212,6 +239,7 @@ def concept_eval_recipe(
         "custom_theme": {"cardMaxWidth": "70%"},
         "allow_work_stealing": False,
         "show_stats": False,  # removing since accept is the only option
+        "auto_exclude_current": False,  # disable Prodigy's cross-session filter
     }
     ### Add instructions if provided
     if instruct and pathlib.Path(instruct).is_file():
@@ -296,6 +324,7 @@ def concept_eval_recipe(
         "config": config,
         "validate_answer": validate_answer,
         "task_router": lang_task_router,
+        "session_factory": session_factory,
         "progress": progress,
     }
     return components
