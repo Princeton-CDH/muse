@@ -27,6 +27,8 @@ from prodigy.structured_types import get_input_hash, get_task_hash
 from prodigy.types import PathInputType, RecipeSettingsType, StreamType
 from prodigy.util import INPUT_HASH_ATTR, TASK_HASH_ATTR
 
+from muse.annotation.constants import CONCEPT_EVAL_TYPOLOGY
+
 
 def add_tokens(stream: StreamType) -> Iterator[StreamType]:
     """
@@ -168,15 +170,7 @@ def concept_eval_recipe(
         "Q3. Notes / observations",
     ]
 
-    q2_labels = [
-        {"id": "correct", "text": "Correct translation"},
-        {"id": "translated", "text": "Should not translate"},
-        {"id": "missing", "text": "Omitted or missing"},
-        {"id": "ils", "text": "Incorrect lexical selection"},
-        {"id": "dit", "text": "Disambiguation issue in target"},
-        {"id": "untranslated", "text": "Incorrectly left untranslated"},
-        {"id": "other", "text": "Other error"},
-    ]
+    q2_labels = [{"id": label, "text": text} for label, text in CONCEPT_EVAL_TYPOLOGY]
 
     # Recipe organization
     ## Initial html template for starting text
