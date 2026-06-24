@@ -10,11 +10,11 @@ Refer to Princeton RC's [Della documentation](https://researchcomputing.princeto
 
 ## Scratch Storage
 
-If you haven't already, create your personal scratch directory witihin the CDH RSE team's scratch at `/scratch/gpfs/CDHRSE/<netid>/`.
+If you haven't already, create your personal scratch directory within the CDH RSE team's scratch at `/scratch/gpfs/CDHRSE/<netid>/`.
 
 A few things to know about this directory:
 
-- It is primarily for storing job input and output files as well as any other intermediary or supplmentary files.
+- It is primarily for storing job input and output files as well as any other intermediary or supplementary files.
 - It is **not backed up**, so make sure to save any important outputs to TigerData.
 - Unlike `/tmp` and other directories within `/scratch`, your personal scratch directory is **not purged**. This means that files persist across sessions, but also it is your responsibility to remove files to avoid hitting group quota limits.
 - Large model files and corpora should live here rather than in your home directory, which has a much smaller quota. For more on data storage quotas see [Princeton RC's documentation on data storage](https://researchcomputing.princeton.edu/support/knowledge-base/data-storage#Filesystem-Details).
@@ -37,7 +37,7 @@ cd muse
 mkdir -p logs
 ```
 
-### Create the conda environment
+### Create the `conda` environment
 
 Della's module system does not include `uv`, so we use `conda` as a thin wrapper solely to make `uv` available. The actual Python environment and dependencies are managed by `uv`. Create the environment once on a login node:
 
@@ -50,7 +50,7 @@ pip install uv
 uv sync
 ```
 
-NOTE: We tried using a project-specific conda environment with all dependencies managed by conda, but ran into compatibility issues (see [issue #55](https://github.com/Princeton-CDH/muse/issues/55)). Our current workaround is to create a minimal conda env that installs `uv`, which then manages everything else.
+NOTE: We tried using a project-specific `conda` environment with all dependencies managed by `conda`, but ran into compatibility issues (see [issue #55](https://github.com/Princeton-CDH/muse/issues/55)). Our current workaround is to create a minimal `conda` environment that installs `uv`, which then manages everything else.
 
 ### Set up the HuggingFace cache
 
