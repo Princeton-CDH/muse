@@ -6,6 +6,11 @@
 
 - `build_report` script for building annotation results from exported Prodigy annotation data
 
+## Documentation
+
+- Update design doc to reflect current project state
+- Fix typos in documentation
+
 ## 0.1.1
 
 - Update `concept-eval` recipe to fix cross-session filtering error
